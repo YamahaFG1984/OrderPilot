@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OrderPilot 架构设计</title>
+<meta name="description" content="OrderPilot：面向中小跨境/外贸公司的轻量智能跟单工作台，架构设计文档。">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --text: #1f2328;
+    --muted: #5b636e;
+    --border: #e3e5e8;
+    --accent: #1d5fd1;
+    --accent-soft: #eaf1fd;
+    --code-bg: #f3f4f6;
+    --warn-bg: #fff7e6;
+    --warn-border: #f0c36d;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Noto Sans Mono CJK SC", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --surface: #161a20;
+      --text: #e6e8eb;
+      --muted: #9aa3ae;
+      --border: #2a3039;
+      --accent: #6ea2ff;
+      --accent-soft: #1a2638;
+      --code-bg: #1d222a;
+      --warn-bg: #2a2314;
+      --warn-border: #7a5d1f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.75 var(--font);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
+  }
+  nav.toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 40px 0 24px;
+    font-size: 13.5px;
+  }
+  nav.toc .brand { font-weight: 700; font-size: 16px; margin-bottom: 16px; color: var(--text); }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a {
+    display: block;
+    padding: 4px 10px;
+    border-left: 2px solid transparent;
+    color: var(--muted);
+  }
+  nav.toc a:hover { color: var(--text); text-decoration: none; border-left-color: var(--border); }
+  nav.toc a.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+
+  main { padding: 40px 0 80px; min-width: 0; }
+  header.hero { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 8px; }
+  header.hero h1 { font-size: 32px; line-height: 1.25; margin: 0 0 12px; letter-spacing: -0.01em; }
+  header.hero p.lead { color: var(--muted); margin: 0 0 16px; font-size: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 12.5px;
+    padding: 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    background: var(--surface);
+  }
+
+  h2 {
+    font-size: 23px;
+    margin: 56px 0 16px;
+    padding-top: 8px;
+    line-height: 1.35;
+  }
+  h2 .num { color: var(--accent); margin-right: 8px; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 17px; margin: 32px 0 10px; }
+  p, ul, ol { margin: 0 0 14px; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  li > ul { margin: 4px 0 0; }
+  strong { font-weight: 650; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 0 0 18px;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  .table-wrap { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--border); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--surface); }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-weight: 600; background: var(--code-bg); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .callout {
+    border: 1px solid var(--warn-border);
+    background: var(--warn-bg);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 0 0 18px;
+  }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 16px; }
+    nav.toc {
+      position: static;
+      max-height: none;
+      padding: 24px 0 0;
+      border-bottom: 1px solid var(--border);
+    }
+    nav.toc details summary { cursor: pointer; font-weight: 600; padding-bottom: 12px; }
+    main { padding-top: 24px; }
+    header.hero h1 { font-size: 26px; }
+    h2 { font-size: 20px; margin-top: 44px; }
+  }
+  @media (min-width: 901px) {
+    nav.toc details summary { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc" aria-label="目录">
+  <div class="brand">OrderPilot</div>
+  <details open>
+    <summary>目录</summary>
+    <ol>
+      <li><a href="#s1">1. 定位与设计原则</a></li>
+      <li><a href="#s2">2. 部署模式</a></li>
+      <li><a href="#s3">3. 代码组织</a></li>
+      <li><a href="#s4">4. 扩展机制</a></li>
+      <li><a href="#s5">5. 平台基础模块</a></li>
+      <li><a href="#s6">6. 领域模型</a></li>
+      <li><a href="#s7">7. ERP 集成</a></li>
+      <li><a href="#s8">8. 导入引擎和 AI 辅助</a></li>
+      <li><a href="#s9">9. 前端与接口</a></li>
+      <li><a href="#s10">10. 部署与工程规范</a></li>
+      <li><a href="#s11">11. 路线图</a></li>
+      <li><a href="#s12">12. 待决问题</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+
+<header class="hero">
+  <h1>OrderPilot 架构设计</h1>
+  <p class="lead">面向中小跨境/外贸公司的轻量智能跟单工作台</p>
+  <div class="meta">
+    <span class="chip">草案 v0.1 · 2026-09-15</span>
+    <span class="chip">Django 5.2 LTS</span>
+    <span class="chip">PostgreSQL</span>
+    <span class="chip">Redis</span>
+    <span class="chip">Celery</span>
+  </div>
+</header>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+<h2><span class="num">1</span>定位与设计原则</h2>
+
+<h3>1.1 产品定位</h3>
+<p>OrderPilot 是<strong>辅助工作台，不是ERP</strong>。典型客户规模是内部 15–20 名员工，外加几十家外部供应商。覆盖的业务：</p>
+<ul>
+  <li>补货备货：根据客户门店销量、海外仓库存和供应商生产周期，提前向供应商下单</li>
+  <li>订单跟进：采购单交期确认、生产节点跟踪、异常预警</li>
+  <li>出货：出货计划、工厂出货确认、报关资料、物流对接</li>
+  <li>结算：供应商发票、货款、罚款</li>
+  <li>商品生命周期：首单、翻单、废番</li>
+  <li>数据：自动汇总、生成报表</li>
+</ul>
+
+<h3>1.2 设计原则</h3>
+<ol>
+  <li><strong>权威来源划分清楚。</strong>ERP 是财务和主数据的权威来源，OrderPilot 是跟单过程数据的权威来源。每类实体只有一个权威来源，另一方只读或只做同步副本（见 <a href="#s6-3">§6.3</a>）。</li>
+  <li><strong>核心和定制分离。</strong>核心只放"跟单领域通用"的逻辑，客户差异一律通过扩展点注入。<strong>客户项目禁止修改核心代码</strong>；需要新的扩展点时，先在核心里加扩展点，再在扩展里实现。</li>
+  <li><strong>先纵向跑通，再抽象。</strong>先用一个真实场景（对日跟单）走完一条完整流程，再把确认稳定的部分提炼进核心。</li>
+  <li><strong>通用基础直接用成熟库。</strong>权限、异步、审计这些能力直接用 Django 生态的成熟方案，把精力留给领域逻辑。</li>
+  <li><strong>一个人也能维护。</strong>架构复杂度要和团队规模匹配：单体应用，服务端渲染，不拆微服务，不做前后端分离。</li>
+</ol>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+<h2><span class="num">2</span>部署模式</h2>
+<p><strong>每家客户独立部署</strong>：一套核心代码，每家客户一个扩展 app，数据库和服务器都是独立的。</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>考量</th><th>选择理由</th></tr></thead>
+  <tbody>
+    <tr><td>定制深度</td><td>每家客户的流程、ERP、单据格式差异大，独立部署可以做到任意深度的定制</td></tr>
+    <tr><td>数据隔离</td><td>外贸公司很在意客户和供应商数据，物理隔离最容易取得客户信任</td></tr>
+    <tr><td>升级节奏</td><td>每家客户可以独立决定何时升级核心版本</td></tr>
+    <tr><td>代价</td><td>运维实例数随客户数线性增长，需要标准化的部署模板和升级脚本来控制（见 <a href="#s10">§10</a>）</td></tr>
+  </tbody>
+</table></div>
+<p><strong>给多租户留的余地：</strong>核心代码不假设"全局只有一家公司"，组织信息统一放在 <code>Organization</code> 配置里，不在代码里硬编码。这样以后需要时可以迁移到 <code>django-tenants</code> 的 schema 隔离方案。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+<h2><span class="num">3</span>代码组织</h2>
+<pre><code>OrderPilot/
+├── config/
+│   ├── settings/
+│   │   ├── base.py
+│   │   ├── dev.py
+│   │   └── prod.py
+│   ├── celery.py
+│   └── urls.py
+├── orderpilot/                     # 核心（以后可以拆成可安装包）
+│   ├── platform/                   # 平台基础，和业务无关
+│   │   ├── accounts/               # 自定义 User、组织、角色、供应商外部用户
+│   │   ├── audit/                  # 操作日志，统一接入变更历史
+│   │   ├── notifications/          # 通知中心、渠道分发、订阅偏好
+│   │   ├── attachments/            # 附件归档
+│   │   ├── integrations/           # ERP 连接器抽象、同步任务、外部 ID 映射
+│   │   ├── importer/               # Excel/单据导入映射引擎
+│   │   ├── alerts/                 # 预警规则引擎
+│   │   ├── workflow/               # 状态机基础、领域事件
+│   │   ├── extensions/             # 扩展加载器和注册表
+│   │   └── ai/                     # LLM 辅助（可选模块）
+│   ├── trade/                      # 跟单领域
+│   │   ├── masterdata/             # 商品(品番/JAN/废番)、客户、门店、仓库、供应商
+│   │   ├── sales/                  # 客户订单（首单/翻单）
+│   │   ├── purchasing/             # 采购单、交期承诺、生产节点
+│   │   ├── shipping/               # 出货计划、出货确认、报关、物流
+│   │   ├── finance/                # 供应商发票、货款、罚款
+│   │   └── replenishment/          # 销量/库存快照、补货建议
+│   ├── workbench/                  # 内部工作台界面（看板、列表、报表）
+│   └── portal/                     # 供应商门户界面
+├── extensions/
+│   └── &lt;customer_code&gt;/            # 客户定制 app
+├── deploy/                         # docker-compose、nginx、备份脚本模板
+├── docs/
+└── tests/</code></pre>
+
+<p><strong>依赖方向（必须遵守）：</strong></p>
+<pre><code>extensions/&lt;customer&gt;  →  orderpilot.trade  →  orderpilot.platform
+         └──────────────────────────────────────────↗
+workbench / portal     →  trade + platform</code></pre>
+<ul>
+  <li><code>platform</code> 不依赖 <code>trade</code>；</li>
+  <li>核心任何代码都不依赖 <code>extensions</code>；</li>
+  <li>扩展只能通过 <a href="#s4">§4</a> 定义的扩展点影响核心行为。</li>
+</ul>
+
+<p>扩展由配置选择：</p>
+<pre><code># config/settings/base.py
+ORDERPILOT_EXTENSION = env("ORDERPILOT_EXTENSION", default=None)  # 例如 "extensions.acme"
+if ORDERPILOT_EXTENSION:
+    INSTALLED_APPS.append(ORDERPILOT_EXTENSION)</code></pre>
+<p>初期所有扩展都放在同一个仓库里，方便核心和扩展一起重构。等核心 API 稳定后，再把核心发布成私有包，每家客户一个部署仓库（<code>orderpilot-&lt;customer&gt;</code>），依赖一个固定的核心版本。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+<h2><span class="num">4</span>扩展机制</h2>
+<div class="callout"><p>这是整个架构的关键：<strong>客户差异必须通过扩展点实现，不能通过修改核心实现</strong>。</p></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>扩展点</th><th>机制</th><th>典型用法</th></tr></thead>
+  <tbody>
+    <tr><td>扩展字段</td><td>核心模型带 <code>extra = JSONField(default=dict)</code>；<code>FieldDefinition</code> 表描述字段（JSON Schema），负责校验和表单、列表渲染</td><td>客户特有的商品属性、订单备注字段</td></tr>
+    <tr><td>ERP 适配器</td><td><code>ERPAdapter</code> 抽象类，由 settings 指定实现类</td><td>金蝶云星空、用友、Excel 兜底</td></tr>
+    <tr><td>策略类</td><td>注册表模式，扩展可以覆盖同名实现</td><td>补货算法、预警规则、导入解析器、单据编号规则、罚款计算</td></tr>
+    <tr><td>业务事件</td><td>领域事件（基于 Django signals 做一层封装），扩展订阅</td><td>采购单确认后同步 ERP，出货后通知客户</td></tr>
+    <tr><td>状态机钩子</td><td>核心定义标准状态和转换，扩展注册转换前校验和转换后副作用</td><td>"出货前必须上传验货报告"</td></tr>
+    <tr><td>配置数据</td><td>存在数据库里，通过 Admin 维护</td><td>导入模板、报表模板、预警阈值、通知订阅</td></tr>
+    <tr><td>界面</td><td>模板覆盖（扩展 app 排在 <code>INSTALLED_APPS</code> 前面）加上预留的模板插槽</td><td>客户特有的看板卡片</td></tr>
+  </tbody>
+</table></div>
+
+<h3>4.1 注册表示意</h3>
+<pre><code># orderpilot/platform/extensions/registry.py
+class Registry:
+    def __init__(self, name):
+        self.name, self._items = name, {}
+
+    def register(self, key, *, override=False):
+        def deco(obj):
+            if key in self._items and not override:
+                raise ImproperlyConfigured(f"{self.name}: '{key}' 已注册")
+            self._items[key] = obj
+            return obj
+        return deco
+
+    def get(self, key):
+        return self._items[key]
+
+replenishment_strategies = Registry("replenishment")
+alert_evaluators = Registry("alerts")
+import_parsers = Registry("importer")</code></pre>
+<pre><code># extensions/acme/replenishment.py
+@replenishment_strategies.register("default", override=True)
+class AcmeStrategy(BaseReplenishmentStrategy):
+    """该客户按门店周销量 × 安全周数计算，并按箱规取整"""</code></pre>
+<p>扩展 app 在 <code>AppConfig.ready()</code> 里导入自己的注册模块。核心在启动时检查：必需的扩展点都已经有实现。</p>
+
+<h3>4.2 领域事件示意</h3>
+<pre><code># 核心：发布
+events.publish("purchasing.po_confirmed", po=po, by=user)
+
+# 扩展：订阅
+@events.subscribe("purchasing.po_confirmed")
+def push_to_erp(po, **kw):
+    sync_po_to_erp.delay(po.pk)   # 副作用一律异步处理，不阻塞主事务</code></pre>
+<p>事件在事务提交之后再分发（用 <code>transaction.on_commit</code>），防止事务回滚了，副作用却已经执行。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+<h2><span class="num">5</span>平台基础模块</h2>
+
+<h3>5.1 用户和权限</h3>
+<ul>
+  <li><strong>从第一天就用自定义 User</strong>（<code>AUTH_USER_MODEL = "accounts.User"</code>），之后再改代价很高。</li>
+</ul>
+<pre><code>class User(AbstractUser):
+    user_type = models.CharField(choices=[("internal", "内部"), ("supplier", "供应商")])
+    supplier = models.ForeignKey("masterdata.Supplier", null=True, blank=True, on_delete=models.PROTECT)
+    language = models.CharField(default="zh-hans")</code></pre>
+<p><strong>权限分三层：</strong></p>
+<div class="table-wrap"><table>
+  <thead><tr><th>层级</th><th>方案</th><th>例子</th></tr></thead>
+  <tbody>
+    <tr><td>功能权限</td><td>Django 自带的用户组和权限</td><td>"跟单员"组可以编辑采购单，"财务"组可以确认罚款</td></tr>
+    <tr><td>规则权限</td><td><code>django-rules</code> 谓词</td><td>只有负责人或主管可以修改这张采购单的交期</td></tr>
+    <tr><td>行级隔离</td><td><code>ScopedQuerySet.for_user(user)</code></td><td>供应商只能看到自己的采购单、出货单和发票</td></tr>
+  </tbody>
+</table></div>
+<div class="callout">
+  <p><strong>行级隔离是安全底线：</strong></p>
+  <ul>
+    <li>所有带供应商归属的模型都继承 <code>SupplierScopedModel</code>，并实现 <code>for_user()</code>；</li>
+    <li>门户视图的基类强制使用 <code>for_user()</code>；</li>
+    <li>测试里对每个门户接口做"跨供应商访问必须返回 404"的断言。</li>
+  </ul>
+</div>
+<p>内部员工可以按"负责供应商 / 负责客户"分配数据范围。第一版只做"全部可见 + 我负责的"筛选，不做内部员工之间的数据隔离。</p>
+
+<h3>5.2 异步任务</h3>
+<ul>
+  <li>Celery + Redis 作为 broker；结果不依赖 Redis 持久化，关键结果写入数据库。</li>
+  <li>定时任务：<code>django-celery-beat</code>，调度配置可以在 Admin 里调整。</li>
+  <li>规范：
+    <ul>
+      <li>任务<strong>必须幂等</strong>，参数只传主键，不传对象；</li>
+      <li>长任务写 <code>TaskRun</code>（状态、进度、错误信息），界面可以查看；</li>
+      <li>失败的任务自动重试（退避），最终失败时通知管理员；</li>
+      <li>队列至少分为 <code>default</code>、<code>sync</code>（ERP 同步）、<code>notify</code> 三个，防止 ERP 同步变慢时堵住通知。</li>
+    </ul>
+  </li>
+  <li>典型定时任务：ERP 增量同步、预警扫描、每日报表、交期临近提醒。</li>
+</ul>
+
+<h3>5.3 通知</h3>
+<pre><code>业务事件 / 预警 ──▶ Notification（收件人、类型、标题、正文、关联对象）
+                         │
+                         ▼
+               按订阅偏好分发（Celery notify 队列）
+       ┌──────────┬───────────┬──────────────┬──────────┐
+     站内信      邮件      企业微信 webhook   钉钉/飞书 webhook</code></pre>
+<ul>
+  <li>渠道是可插拔的 <code>Channel</code> 类，客户可以在扩展里新增渠道；</li>
+  <li>用户可以设置"哪类通知走哪个渠道"，并支持每日汇总，避免消息轰炸；</li>
+  <li>站内信实时性第一版用轮询（HTMX 定时刷新），以后再评估 Django Channels。</li>
+</ul>
+
+<h3>5.4 审计</h3>
+<ul>
+  <li>关键单据（采购单、出货单、发票、罚款）用 <code>django-simple-history</code> 记录每次字段变更；</li>
+  <li>登录、导出、权限变更、状态转换写入 <code>AuditLog</code>；</li>
+  <li>交期变更要保留历史，这是和供应商对账、判定罚款的依据。</li>
+</ul>
+
+<h3>5.5 附件</h3>
+<ul>
+  <li>统一的 <code>Attachment</code> 模型，通过 GenericForeignKey 挂到任意单据；带分类（发票、装箱单、报关单、验货报告等）；</li>
+  <li>存储用 <code>django-storages</code>，可以在本地磁盘和 S3/阿里云 OSS 之间切换；</li>
+  <li>下载时经过权限校验，不直接暴露存储地址。</li>
+</ul>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+<h2><span class="num">6</span>领域模型</h2>
+
+<h3>6.1 主数据</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>模型</th><th>关键字段</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td><code>Product</code></td><td>品番 <code>part_no</code>、JAN 码、名称（中/日）、箱规、状态（在售/废番）、默认供应商</td><td>废番后禁止生成新采购单，已下的订单继续跟踪</td></tr>
+    <tr><td><code>Customer</code></td><td>名称、币种、结算条款</td><td>日本客户</td></tr>
+    <tr><td><code>Store</code></td><td>所属客户、门店编号</td><td>销量数据的维度</td></tr>
+    <tr><td><code>Warehouse</code></td><td>类型（日本仓/国内仓）、地址</td><td>库存数据的维度</td></tr>
+    <tr><td><code>Supplier</code></td><td>名称、联系人、标准生产周期、结算条款</td><td>可以关联多个门户账号</td></tr>
+    <tr><td><code>SupplierProduct</code></td><td>供应商、商品、采购价、生产周期、最小起订量</td><td>同一个商品可能有多家供应商</td></tr>
+  </tbody>
+</table></div>
+<p>所有主数据都通过 <code>ExternalRef(content_type, object_id, system, external_id)</code> 关联 ERP 里的 ID，<strong>不在业务模型上直接加 <code>kingdee_id</code> 这种字段</strong>。</p>
+
+<h3>6.2 单据流转</h3>
+<pre><code>客户订单 SalesOrder ──拆分/合并──▶ 采购单 PurchaseOrder ──▶ 出货 Shipment ──▶ 结算
+   │                                  │                        │                  │
+   ├ 首单/翻单                         ├ 承诺交期/确认交期        ├ 出货确认          ├ SupplierInvoice
+   └ 客户交期                          ├ 生产节点 Milestone      ├ 报关资料          ├ Payment
+                                      └ 交期变更历史             └ 物流单号          └ Penalty</code></pre>
+<p><strong>采购单标准状态机（核心定义，扩展只能加钩子）：</strong></p>
+<pre><code>草稿 ─提交─▶ 待供应商确认 ─确认─▶ 生产中 ─▶ 待验货 ─▶ 待出货 ─▶ 已出货 ─▶ 已结算
+               │                       │
+               └─拒绝/改期─▶ 草稿       └─(任意阶段) 取消</code></pre>
+<ul>
+  <li>状态转换统一通过 <code>workflow</code> 模块执行，自动写审计记录、发布领域事件；</li>
+  <li>状态机实现可以选用 <code>viewflow.fsm</code> 或者一个轻量的自研实现（转换表加钩子）。<strong>不做可视化或可配置的流程引擎</strong>，等有第二家客户验证需求后再考虑。</li>
+</ul>
+
+<h3 id="s6-3">6.3 权威来源划分</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>数据</th><th>权威来源</th><th>OrderPilot 中的角色</th></tr></thead>
+  <tbody>
+    <tr><td>商品、客户、供应商主数据</td><td>ERP</td><td>同步副本加扩展字段；本地补充的属性（日文名、箱规等）存在 <code>extra</code></td></tr>
+    <tr><td>客户订单</td><td>ERP 或客户文件</td><td>导入或同步后在本地跟踪</td></tr>
+    <tr><td>采购单</td><td><strong>OrderPilot 创建 → 推送 ERP</strong></td><td>跟单过程（交期、节点、异常）以 OrderPilot 为准</td></tr>
+    <tr><td>生产节点、交期变更</td><td><strong>OrderPilot</strong></td><td>ERP 里没有这类数据</td></tr>
+    <tr><td>出货确认、报关资料、物流</td><td><strong>OrderPilot</strong></td><td>出库单据可以回写 ERP</td></tr>
+    <tr><td>发票、付款</td><td>ERP</td><td>同步回来用于对账展示；供应商通过门户上传发票附件</td></tr>
+    <tr><td>罚款</td><td><strong>OrderPilot 计算、审批 → 推送 ERP</strong></td><td>依据交期变更历史和规则计算</td></tr>
+    <tr><td>门店销量、日本仓库存</td><td>客户文件或客户系统</td><td>以快照形式导入</td></tr>
+  </tbody>
+</table></div>
+<p>同步发生冲突时，以该实体的权威来源为准，被覆盖的一方写入同步日志。</p>
+
+<h3>6.4 补货</h3>
+<pre><code>SalesSnapshot(门店×商品×周期的销量)  ┐
+InventorySnapshot(仓库×商品×日期)    ├─▶ ReplenishmentStrategy ─▶ ReplenishmentSuggestion ─人工确认─▶ PurchaseOrder
+在途量(未到货的采购单)                │      （注册表，可按客户替换）      （建议量、依据、预计断货日）
+SupplierProduct.生产周期/最小起订量   ┘</code></pre>
+<ul>
+  <li>默认策略：<code>建议量 = 预测日均销量 × (生产周期 + 海运周期 + 安全天数) − 可用库存 − 在途量</code>，再按最小起订量和箱规取整；</li>
+  <li>每条建议都保存计算依据（输入快照加中间值），方便解释和复盘；</li>
+  <li><strong>不自动下单</strong>：建议必须经人确认才生成采购单。</li>
+</ul>
+
+<h3>6.5 预警</h3>
+<ul>
+  <li><code>AlertRule</code>：类型（对应注册表里的 evaluator）、参数（JSON）、严重级别、接收人或角色、是否启用；</li>
+  <li><code>Alert</code>：规则、关联对象、去重键、状态（open / ack / resolved）、首次和最近触发时间；</li>
+  <li>由定时任务扫描，也可以由事件触发；同一个去重键在 open 期间不重复通知。</li>
+  <li>内置规则：
+    <ul>
+      <li>交期临近但供应商未确认；</li>
+      <li>确认交期晚于客户交期；</li>
+      <li>生产节点逾期；</li>
+      <li>预计断货日早于到货日；</li>
+      <li>出货资料不齐；</li>
+      <li>发票金额与采购单不符；</li>
+      <li>废番商品仍有未完成的采购单。</li>
+    </ul>
+  </li>
+</ul>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+<h2><span class="num">7</span>ERP 集成</h2>
+
+<h3>7.1 适配器接口</h3>
+<pre><code>class ERPAdapter(ABC):
+    system: str  # "kingdee_cloud", "excel", ...
+
+    # 拉取（增量，since 为上次同步的水位线）
+    def pull_products(self, since) -&gt; Iterable[ProductDTO]: ...
+    def pull_partners(self, since) -&gt; Iterable[PartnerDTO]: ...
+    def pull_sales_orders(self, since) -&gt; Iterable[SalesOrderDTO]: ...
+    def pull_inventory(self, as_of) -&gt; Iterable[InventoryDTO]: ...
+    def pull_invoices(self, since) -&gt; Iterable[InvoiceDTO]: ...
+
+    # 推送
+    def push_purchase_order(self, po) -&gt; ExternalRefDTO: ...
+    def push_penalty(self, penalty) -&gt; ExternalRefDTO: ...
+
+    def health_check(self) -&gt; None: ...</code></pre>
+<ul>
+  <li>适配器只负责和外部系统之间的数据转换，统一输出 DTO（dataclass 或 pydantic）；</li>
+  <li>DTO 到模型的落库由核心的同步服务统一处理（匹配 <code>ExternalRef</code>、冲突规则、写日志），<strong>适配器不直接操作 ORM</strong>。</li>
+</ul>
+
+<h3>7.2 金蝶云星空</h3>
+<ul>
+  <li>通过金蝶云星空官方 WebAPI 对接（提供登录、单据查询、保存、提交、审核等接口，官方有 Python SDK）；</li>
+  <li>实施前要和客户确认：
+    <ul>
+      <li>云星空版本（公有云/私有云）、账套 ID；</li>
+      <li>集成用户的接口权限；</li>
+      <li>用到的单据类型和字段标识，特别是客户自定义字段；</li>
+      <li>有没有测试账套可用。</li>
+    </ul>
+  </li>
+  <li>先按"单据类型 → 字段映射"写成配置，客户自定义的字段放到扩展适配器的子类里处理。</li>
+</ul>
+
+<h3>7.3 同步机制</h3>
+<ul>
+  <li><code>SyncJob</code>：适配器、实体类型、方向、水位线、状态、统计（新增/更新/跳过/失败）、错误明细；</li>
+  <li>按修改时间增量拉取，每天一次全量校验；</li>
+  <li>推送失败进入重试队列，超过次数就生成预警；</li>
+  <li>所有同步都跑在 <code>sync</code> 队列上，并且可以在界面上手动触发、查看历史。</li>
+</ul>
+
+<h3>7.4 Excel 兜底适配器</h3>
+<p>没有 API 权限、或者客户数据本来就在 Excel 里的时候，用导入引擎（<a href="#s8">§8</a>）实现同一套 DTO 输入，下游的同步服务不需要知道数据来源。</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+<h2><span class="num">8</span>导入引擎和 AI 辅助</h2>
+
+<h3>8.1 导入流程</h3>
+<pre><code>上传文件 ─▶ 选择/识别 ImportTemplate ─▶ 解析 ─▶ 逐行校验 ─▶ 预览（错误和差异高亮） ─▶ 确认入库 ─▶ ImportBatch 留档</code></pre>
+<ul>
+  <li><code>ImportTemplate</code>：目标实体、表头行、列映射、值转换（日期格式、单位、代码映射）、唯一键；</li>
+  <li><code>ImportBatch</code>：原文件（作为附件保存）、状态、每行结果；可以按批次回滚；</li>
+  <li>解析器走注册表，客户特殊格式（多 sheet、合并单元格、日文表头）在扩展里实现；</li>
+  <li>典型的导入：客户订单、门店销量、日本仓库存、供应商交期回复。</li>
+</ul>
+
+<h3>8.2 AI 辅助（可选模块）</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>能力</th><th>输入</th><th>输出</th></tr></thead>
+  <tbody>
+    <tr><td>列映射建议</td><td>陌生 Excel 的表头和样本行</td><td>推荐的 <code>ImportTemplate</code> 映射</td></tr>
+    <tr><td>邮件和文件解析</td><td>客户订单邮件、供应商回复、PDF</td><td>结构化草稿（订单行、交期）</td></tr>
+    <tr><td>报表摘要</td><td>周期数据</td><td>异常说明、跟进建议</td></tr>
+    <tr><td>Agent 工具接口</td><td>自然语言指令</td><td>调用受控的 API（查询订单、生成建议、创建草稿）</td></tr>
+  </tbody>
+</table></div>
+<div class="callout">
+  <p><strong>约束：</strong></p>
+  <ul>
+    <li>AI 的输出一律是<strong>草稿</strong>，人工确认后才能入库或对外发送；</li>
+    <li>Agent 只能调用白名单里的 API，以当前用户的身份执行，受同一套权限约束；</li>
+    <li>模型供应商通过配置切换，调用记录（输入摘要、输出、token、耗时）要留存；</li>
+    <li>发给外部模型的数据要脱敏，客户可以选择关闭这个模块。</li>
+  </ul>
+</div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+<h2><span class="num">9</span>前端与接口</h2>
+<ul>
+  <li><strong>内部工作台和供应商门户</strong>：Django 模板 + HTMX + Alpine.js，UI 组件用 Tailwind CSS。
+    <ul>
+      <li>理由：一个人就能开发，不需要维护两套工程；AI 编码工具对这类代码也支持得很好。</li>
+      <li>核心页面：跟单看板（按状态和预警）、采购单详情时间线、补货建议列表、预警中心、报表。</li>
+      <li>门户页面：待确认采购单、交期回复、上传发票和出货资料、罚款查看和申诉。</li>
+    </ul>
+  </li>
+  <li><strong>Django Admin</strong>：用于主数据维护、配置（模板、规则、字段定义）、运维排查，不对供应商开放。</li>
+  <li><strong>API</strong>：Django REST Framework，只用于 ERP 回调、AI Agent 工具和将来的移动端；Token 或 OAuth 认证，同样走 <code>for_user()</code> 权限。</li>
+  <li><strong>国际化和时区</strong>：
+    <ul>
+      <li>从一开始就启用 i18n，界面支持中文和日文，所有界面文案都用 <code>gettext</code>；</li>
+      <li><code>USE_TZ=True</code>，数据库统一存 UTC；显示时区跟随用户设置（上海 / 东京）；</li>
+      <li>交期这类"业务日期"用 <code>DateField</code>，不带时区。</li>
+    </ul>
+  </li>
+</ul>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+<h2><span class="num">10</span>部署与工程规范</h2>
+
+<h3>10.1 部署</h3>
+<p>每家客户一套 docker-compose：</p>
+<pre><code>nginx ─▶ web (gunicorn)
+          │
+          ├── postgres
+          ├── redis
+          ├── celery-worker (default, notify)
+          ├── celery-worker (sync)
+          └── celery-beat</code></pre>
+<ul>
+  <li>配置全部走环境变量（<code>django-environ</code>），镜像不区分客户，只是注入的 <code>ORDERPILOT_EXTENSION</code> 和配置不同；</li>
+  <li>每天自动备份 PostgreSQL 和附件存储，并定期做恢复演练；</li>
+  <li>升级脚本：拉取镜像、执行迁移、重启 worker；每次升级前先备份；</li>
+  <li>监控：Sentry 捕获错误，健康检查接口（数据库、Redis、Celery、ERP 连通性）。</li>
+</ul>
+
+<h3>10.2 工程规范</h3>
+<ul>
+  <li>依赖管理：<code>uv</code>；代码规范：<code>ruff</code>；测试：<code>pytest-django</code> + <code>factory_boy</code>；</li>
+  <li>核心测试覆盖：状态机转换、权限隔离（跨供应商访问）、同步冲突、补货计算、导入校验；</li>
+  <li>迁移规范：核心迁移不能依赖扩展；扩展只能新增表，或者用扩展字段，不能修改核心表；</li>
+  <li>版本：核心遵循语义化版本，扩展声明兼容的核心版本范围。</li>
+</ul>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+<h2><span class="num">11</span>路线图</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>阶段</th><th>周期</th><th>内容</th><th>验收</th></tr></thead>
+  <tbody>
+    <tr><td>阶段0：骨架</td><td>1–2 周</td><td>项目结构、settings、自定义 User 和权限、Celery、通知、审计、附件、扩展加载器、docker-compose</td><td>能部署一个空实例，供应商账号只能看到自己的数据</td></tr>
+    <tr><td>阶段1：对日跟单纵向切片</td><td>3–6 周</td><td>主数据、采购单状态机、供应商门户（确认交期和上传资料）、交期预警、Excel 导入、金蝶适配器（先 mock）、跟单看板</td><td>一张采购单能从创建走到出货，全程可追踪，有预警</td></tr>
+    <tr><td>阶段2：补货和结算</td><td>3–4 周</td><td>销量和库存快照、补货建议、发票对账、罚款、报表</td><td>能出每周补货建议和供应商对账单</td></tr>
+    <tr><td>阶段3：提炼</td><td>持续</td><td>接入第二家客户或第二种场景，提炼核心，扩展拆成独立仓库，AI 辅助模块</td><td>第二家客户的定制全部在扩展里完成，没有修改核心</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+<h2><span class="num">12</span>待决问题</h2>
+<ol>
+  <li><strong>多币种和汇率</strong>：采购用人民币，销售用日元，汇率取 ERP 的还是自己维护？报表按哪个币种汇总？</li>
+  <li><strong>罚款规则建模</strong>：按延期天数、按金额比例还是阶梯规则？需要审批流吗？供应商的申诉流程怎么走？</li>
+  <li><strong>供应商门户是否需要手机端</strong>：工厂的人多用手机，要不要做响应式页面，或者企业微信 H5？</li>
+  <li><strong>金蝶测试环境</strong>：从哪里获得测试账套？客户自定义字段有多少？</li>
+  <li><strong>客户数据的获取方式</strong>：门店销量和日本仓库存是客户定期发 Excel，还是可以对接客户系统或 EDI？</li>
+  <li><strong>报关和物流</strong>：只做资料归档和状态跟踪，还是要对接货代或报关系统的接口？</li>
+  <li><strong>AI 模块的数据合规</strong>：客户能不能接受数据发给外部模型？要不要支持私有化部署的模型？</li>
+</ol>
+</section>
+
+<footer>
+  OrderPilot 架构设计 · 草案 v0.1 · 源文件：<code>docs/architecture.md</code>
+</footer>
+
+</main>
+</div>
+
+<script>
+  // 目录高亮：滚动时标记当前所在章节
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var sections = Array.prototype.slice.call(document.querySelectorAll('main section[id]'));
+    if (!('IntersectionObserver' in window)) return;
+    var visible = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting; });
+      var current = sections.find(function (s) { return visible[s.id]; });
+      if (!current) return;
+      links.forEach(function (a) { a.classList.remove('active'); });
+      if (map[current.id]) map[current.id].classList.add('active');
+    }, { rootMargin: '0px 0px -70% 0px' });
+    sections.forEach(function (s) { io.observe(s); });
+  })();
+</script>
+</body>
+</html>
