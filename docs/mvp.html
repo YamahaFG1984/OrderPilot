@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OrderPilot MVP</title>
+<meta name="description" content="OrderPilot MVP 系统现状：已实现的功能、界面截图、架构落地情况、运行方式与后续计划。">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --text: #1f2328;
+    --muted: #5b636e;
+    --border: #e3e5e8;
+    --accent: #1d5fd1;
+    --accent-soft: #eaf1fd;
+    --code-bg: #f3f4f6;
+    --warn-bg: #fff7e6;
+    --warn-border: #f0c36d;
+    --ok: #2f7d4f;
+    --ok-soft: #e6f5ec;
+    --part: #a15c00;
+    --part-soft: #fff3de;
+    --todo: #5b636e;
+    --todo-soft: #eef0f3;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, "Noto Sans Mono CJK SC", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --surface: #161a20;
+      --text: #e6e8eb;
+      --muted: #9aa3ae;
+      --border: #2a3039;
+      --accent: #6ea2ff;
+      --accent-soft: #1a2638;
+      --code-bg: #1d222a;
+      --warn-bg: #2a2314;
+      --warn-border: #7a5d1f;
+      --ok: #5fcf8c;
+      --ok-soft: #15291e;
+      --part: #f0b35b;
+      --part-soft: #33260f;
+      --todo: #9aa3ae;
+      --todo-soft: #1f242c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.75 var(--font); -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .layout { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; }
+  nav.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 40px 0 24px; font-size: 13.5px; }
+  nav.toc .brand { font-weight: 700; font-size: 16px; margin-bottom: 4px; color: var(--text); }
+  nav.toc .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 16px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 2px 0; }
+  nav.toc a.item { display: block; padding: 4px 10px; border-left: 2px solid transparent; color: var(--muted); }
+  nav.toc a.item:hover { color: var(--text); text-decoration: none; border-left-color: var(--border); }
+  nav.toc a.item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-soft); }
+  nav.toc .related { margin: 18px 0 0; padding-left: 10px; font-size: 13px; line-height: 1.9; }
+
+  main { padding: 40px 0 80px; min-width: 0; }
+  header.hero { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 8px; }
+  header.hero h1 { font-size: 32px; line-height: 1.25; margin: 0 0 12px; letter-spacing: -0.01em; }
+  header.hero p.lead { color: var(--muted); margin: 0 0 6px; font-size: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .chip { font-size: 12.5px; padding: 2px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: var(--surface); }
+  .chip.ok { color: var(--ok); border-color: transparent; background: var(--ok-soft); }
+
+  h2 { font-size: 23px; margin: 56px 0 16px; padding-top: 8px; line-height: 1.35; }
+  h2 .num { color: var(--accent); margin-right: 8px; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 17px; margin: 28px 0 10px; }
+  p, ul, ol { margin: 0 0 14px; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  strong { font-weight: 650; }
+  code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.6; background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0 0 18px; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+
+  .table-wrap { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--border); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--surface); }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-weight: 600; background: var(--code-bg); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td.nowrap { white-space: nowrap; }
+
+  .callout { border: 1px solid var(--warn-border); background: var(--warn-bg); border-radius: 8px; padding: 12px 16px; margin: 0 0 18px; }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .note { border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; padding: 10px 14px; margin: 0 0 16px; font-size: 14px; }
+  .note p:last-child { margin-bottom: 0; }
+
+  /* 数字 */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 12px; margin: 0 0 18px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+  .stat b { display: block; font-size: 26px; line-height: 1.2; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 13px; }
+
+  /* 角色卡片 */
+  .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 0 0 18px; }
+  .role { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px 6px; }
+  .role h3 { margin: 0 0 4px; }
+  .role .who { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .role ul { padding-left: 18px; font-size: 14px; }
+
+  /* 截图 */
+  .shot { margin: 0 0 22px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .shot a { display: block; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot figcaption { padding: 10px 14px; font-size: 13.5px; color: var(--muted); border-top: 1px solid var(--border); }
+  .shot figcaption b { color: var(--text); }
+  .shot-row { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
+  @media (max-width: 760px) { .shot-row { grid-template-columns: minmax(0, 1fr); } .shot-row .shot.phone { max-width: 300px; } }
+
+  figure.diagram { margin: 0 0 18px; }
+  .fig-scroll { overflow-x: auto; border-radius: 10px; }
+  .fig-scroll img { display: block; width: 100%; min-width: 640px; height: auto; }
+
+  /* 状态标签 */
+  .st { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .st-done { background: var(--ok-soft); color: var(--ok); }
+  .st-part { background: var(--part-soft); color: var(--part); }
+  .st-todo { background: var(--todo-soft); color: var(--todo); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 16px; }
+    nav.toc { position: static; max-height: none; padding: 24px 0 0; border-bottom: 1px solid var(--border); }
+    nav.toc details summary { cursor: pointer; font-weight: 600; padding-bottom: 12px; }
+    main { padding-top: 24px; }
+    header.hero h1 { font-size: 26px; }
+    h2 { font-size: 20px; margin-top: 44px; }
+  }
+  @media (min-width: 901px) { nav.toc details summary { display: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc" aria-label="目录">
+  <div class="brand">OrderPilot</div>
+  <div class="sub">MVP 系统现状</div>
+  <details open>
+    <summary>目录</summary>
+    <ol>
+      <li><a class="item" href="#s1">1. 概览</a></li>
+      <li><a class="item" href="#s2">2. 现在能做什么</a></li>
+      <li><a class="item" href="#s3">3. 界面截图</a></li>
+      <li><a class="item" href="#s4">4. 采购单流程</a></li>
+      <li><a class="item" href="#s5">5. 预警规则</a></li>
+      <li><a class="item" href="#s6">6. 架构落地情况</a></li>
+      <li><a class="item" href="#s7">7. 本地运行</a></li>
+      <li><a class="item" href="#s8">8. 演示脚本</a></li>
+      <li><a class="item" href="#s9">9. 账号与安全</a></li>
+      <li><a class="item" href="#s10">10. 测试与质量</a></li>
+      <li><a class="item" href="#s11">11. 暂未实现与下一步</a></li>
+    </ol>
+  </details>
+  <p class="related">相关文档<br><a href="index.html">架构设计 →</a><br><a href="research/interview-guide.html">跟单业务访谈提纲 →</a></p>
+</nav>
+
+<main>
+
+<header class="hero">
+  <h1>OrderPilot MVP：系统现状</h1>
+  <p class="lead">面向中小跨境/外贸公司的轻量智能跟单工作台。</p>
+  <p class="lead">当前版本打通了<strong>采购单跟单主线</strong>，可以在本机完整演示：从 ERP 同步主数据，到供应商在门户确认交期、更新生产节点，再到验货和出货，全程有延期预警、通知和操作记录。</p>
+  <div class="meta">
+    <span class="chip">MVP v0.1 · 2026-09-16</span>
+    <span class="chip">Django 5.2 LTS</span>
+    <span class="chip">PostgreSQL 16</span>
+    <span class="chip">Redis 7 · Celery 5</span>
+    <span class="chip">Django 模板 + htmx</span>
+    <span class="chip ok">38 项测试通过</span>
+  </div>
+</header>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+<h2><span class="num">1</span>概览</h2>
+<div class="stats">
+  <div class="stat"><b>2</b><span>个界面：内部工作台 + 供应商门户</span></div>
+  <div class="stat"><b>8</b><span>个采购单状态</span></div>
+  <div class="stat"><b>5</b><span>条内置预警规则</span></div>
+  <div class="stat"><b>17</b><span>个数据模型</span></div>
+  <div class="stat"><b>≈3,800</b><span>行 Python（不含测试）</span></div>
+  <div class="stat"><b>38</b><span>项自动化测试</span></div>
+</div>
+<div class="note"><p><strong>定位：</strong>这是用来演示和验证需求的 MVP，不是可以直接交付客户的产品。ERP 用的是模拟的金蝶数据，邮件只打印到终端，也还没有生产环境的部署配置。详见 <a href="#s11">第 11 节</a>。</p></div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+<h2><span class="num">2</span>现在能做什么</h2>
+<div class="roles">
+  <div class="role">
+    <h3>跟单员</h3>
+    <div class="who">内部员工 · 工作台</div>
+    <ul>
+      <li><strong>跟单看板：</strong>按状态分列，顶部显示跟进中、7 天内到期、已逾期、未处理预警；卡片边框颜色表示预警级别</li>
+      <li>新建、编辑采购单：商品明细、要求交期、给供应商的备注、内部备注</li>
+      <li>提交给供应商后，<strong>自动推送到 ERP</strong>，生成采购订单号</li>
+      <li>验货通过或退回生产，确认出货（货代、提单号、柜号、预计到港）</li>
+      <li>可以<strong>代供应商录入</strong>交期和生产节点，比如供应商在微信上回复的情况</li>
+      <li>预警中心：知悉、立即扫描；通知铃铛</li>
+      <li>ERP 同步页：手动同步主数据，查看每次同步的结果</li>
+    </ul>
+  </div>
+  <div class="role">
+    <h3>供应商</h3>
+    <div class="who">外部账号 · 供应商门户</div>
+    <ul>
+      <li><strong>只看得到自己的采购单</strong>，按待确认、生产中、待验货、待出货分组</li>
+      <li>确认交期，或"拒绝 / 要求改单"（必须写原因）</li>
+      <li>更新生产节点的计划日期和实际日期</li>
+      <li>修改交期（必须写原因），系统自动通知跟单员</li>
+      <li>上传装箱单、发票、验货报告等附件</li>
+      <li>看不到终端客户是谁，也看不到内部备注，免得工厂绕过贸易公司直接接触客户</li>
+    </ul>
+  </div>
+  <div class="role">
+    <h3>系统</h3>
+    <div class="who">后台自动执行</div>
+    <ul>
+      <li>从（模拟的）金蝶同步供应商、客户、物料：重复执行不会产生重复数据，金蝶里禁用的物料会同步为"废番"</li>
+      <li>每分钟扫描预警：同一个问题不会重复报警，条件解除后预警自动关闭</li>
+      <li>站内信 + 邮件通知，由 Celery 异步投递</li>
+      <li>完整的操作时间线和交期变更历史，这是以后判定罚款的依据</li>
+      <li><strong>业务校验：</strong>含废番商品的采购单不能提交；承诺交期不能早于今天</li>
+      <li><strong>客户专属规则：</strong>演示扩展要求"出货前必须上传装箱单"，写在扩展里，没有改核心代码</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+<h2><span class="num">3</span>界面截图</h2>
+<p class="muted">截图中的公司、商品和人名都是虚构的演示数据。点击截图可以查看原图。</p>
+
+<h3>内部工作台</h3>
+<figure class="shot">
+  <a href="img/screens/dashboard.png" target="_blank" rel="noopener"><img src="img/screens/dashboard.png" alt="跟单看板" width="1440" height="900" loading="lazy"></a>
+  <figcaption><b>跟单看板：</b>按状态分列，卡片显示剩余天数；左边框颜色代表最高预警级别，红色为严重、橙色为警告。</figcaption>
+</figure>
+<figure class="shot">
+  <a href="img/screens/po-overdue.png" target="_blank" rel="noopener"><img src="img/screens/po-overdue.png" alt="逾期采购单详情" width="1440" height="900" loading="lazy"></a>
+  <figcaption><b>逾期采购单详情：</b>ERP 采购订单号、超期的生产节点、右侧的预警和操作时间线。供应商曾以"原料棉纱到货延迟"为由改过交期。</figcaption>
+</figure>
+<figure class="shot">
+  <a href="img/screens/ship-blocked.png" target="_blank" rel="noopener"><img src="img/screens/ship-blocked.png" alt="出货被客户扩展规则拦截" width="1440" height="640" loading="lazy"></a>
+  <figcaption><b>客户专属规则：</b>没有上传装箱单时点"确认出货"，会被 <code>extensions/demo_jp</code> 里的规则拦下。</figcaption>
+</figure>
+<figure class="shot">
+  <a href="img/screens/alerts.png" target="_blank" rel="noopener"><img src="img/screens/alerts.png" alt="预警中心" width="1440" height="780" loading="lazy"></a>
+  <figcaption><b>预警中心：</b>按级别统计，可以标记知悉；条件解除后自动关闭。</figcaption>
+</figure>
+<figure class="shot">
+  <a href="img/screens/sync.png" target="_blank" rel="noopener"><img src="img/screens/sync.png" alt="ERP 同步" width="1440" height="640" loading="lazy"></a>
+  <figcaption><b>ERP 同步：</b>每次拉取主数据、推送采购单都有记录，包括新增、更新、未变的数量，出错时附带错误信息。</figcaption>
+</figure>
+
+<h3>供应商门户</h3>
+<figure class="shot">
+  <a href="img/screens/portal-home.png" target="_blank" rel="noopener"><img src="img/screens/portal-home.png" alt="供应商门户首页" width="1440" height="860" loading="lazy"></a>
+  <figcaption><b>门户首页：</b>供应商只看得到自己的采购单，每组都附有操作提示。</figcaption>
+</figure>
+<div class="shot-row">
+  <figure class="shot">
+    <a href="img/screens/portal-confirm.png" target="_blank" rel="noopener"><img src="img/screens/portal-confirm.png" alt="供应商确认交期" width="1440" height="640" loading="lazy"></a>
+    <figcaption><b>确认交期：</b>填写承诺交期后提交，系统会自动排出生产节点的计划日期。</figcaption>
+  </figure>
+  <figure class="shot phone">
+    <a href="img/screens/portal-mobile.png" target="_blank" rel="noopener"><img src="img/screens/portal-mobile.png" alt="手机上的供应商门户" width="780" height="1688" loading="lazy"></a>
+    <figcaption><b>手机访问：</b>工厂业务员用手机也能操作。</figcaption>
+  </figure>
+</div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+<h2><span class="num">4</span>采购单流程</h2>
+<figure class="diagram"><div class="fig-scroll"><img src="img/po-states.svg" alt="采购单标准状态机" width="880" height="245" loading="lazy"></div></figure>
+<div class="table-wrap"><table>
+  <thead><tr><th>操作</th><th>状态变化</th><th>谁可以操作</th><th>需要填写 / 校验</th></tr></thead>
+  <tbody>
+    <tr><td>提交给供应商</td><td class="nowrap">草稿 → 待供应商确认</td><td>跟单员</td><td>至少一行商品；不能含废番商品。提交后自动推送 ERP、通知供应商</td></tr>
+    <tr><td>确认交期</td><td class="nowrap">待确认 → 生产中</td><td>供应商（跟单员可代录）</td><td>承诺交期，不能早于今天；自动排出生产节点计划</td></tr>
+    <tr><td>拒绝 / 要求改单</td><td class="nowrap">待确认 → 草稿</td><td>供应商（跟单员可代录）</td><td>原因</td></tr>
+    <tr><td>生产完工，申请验货</td><td class="nowrap">生产中 → 待验货</td><td>供应商（跟单员可代录）</td><td>—</td></tr>
+    <tr><td>验货通过</td><td class="nowrap">待验货 → 待出货</td><td>跟单员</td><td>—</td></tr>
+    <tr><td>验货不合格</td><td class="nowrap">待验货 → 生产中</td><td>跟单员</td><td>原因</td></tr>
+    <tr><td>确认出货</td><td class="nowrap">待出货 → 已出货</td><td>跟单员</td><td>出货日期、货代、提单号、柜号、预计到港；演示扩展要求已上传装箱单</td></tr>
+    <tr><td>取消</td><td class="nowrap">出货前任意状态 → 已取消</td><td>跟单员</td><td>原因</td></tr>
+  </tbody>
+</table></div>
+<p>生产中和待验货的采购单可以随时<strong>修改交期</strong>（必须写原因）。每次修改都会记入交期变更历史，并通知对方。</p>
+<p class="muted">"已结算"状态出现在架构设计里，MVP 还没有实现，结算模块在后续计划中。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+<h2><span class="num">5</span>预警规则</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>规则</th><th>级别</th><th>触发条件</th><th>默认参数</th></tr></thead>
+  <tbody>
+    <tr><td>供应商超时未确认</td><td>警告</td><td>采购单提交后超过 N 天，供应商仍未确认交期</td><td>N = 2 天</td></tr>
+    <tr><td>交期已逾期</td><td>严重</td><td>跟进中的采购单超过承诺交期（还没确认的按要求交期）</td><td>—</td></tr>
+    <tr><td>交期临近</td><td>警告</td><td>生产中或待验货的采购单，N 天内到期</td><td>N = 3 天</td></tr>
+    <tr><td>承诺交期晚于要求交期</td><td>警告</td><td>供应商承诺的交期晚于客户要求的交期</td><td>—</td></tr>
+    <tr><td>生产节点逾期</td><td>警告</td><td>生产中的采购单，某个节点超过计划日期仍未完成</td><td>宽限 0 天</td></tr>
+  </tbody>
+</table></div>
+<ul>
+  <li>规则的启用状态、级别和参数，都可以在管理后台的"预警规则"里调整。</li>
+  <li>新预警会通知负责的跟单员；同一个问题在解除前只报一次。</li>
+  <li>客户扩展可以用同一套注册机制新增规则，或覆盖内置规则。</li>
+</ul>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+<h2><span class="num">6</span>架构落地情况</h2>
+<p>对照 <a href="index.html">架构设计</a> 中的模块划分：</p>
+<div class="legend"><span><span class="st st-done">已实现</span> MVP 中可用</span><span><span class="st st-part">部分实现</span> 接口或基础已有</span><span><span class="st st-todo">未开始</span></span></div>
+<div class="table-wrap"><table>
+  <thead><tr><th>模块</th><th>状态</th><th>现状</th></tr></thead>
+  <tbody>
+    <tr><td><code>platform/accounts</code></td><td><span class="st st-done">已实现</span></td><td>自定义 User（内部员工 / 供应商）、行级隔离 <code>for_user()</code>、django-rules 权限规则</td></tr>
+    <tr><td><code>platform/workflow</code></td><td><span class="st st-done">已实现</span></td><td>状态机（带行锁防并发）、guard 扩展点、事务提交后分发的领域事件</td></tr>
+    <tr><td><code>platform/extensions</code></td><td><span class="st st-done">已实现</span></td><td>扩展点注册表；<code>extensions/demo_jp</code> 演示客户扩展</td></tr>
+    <tr><td><code>platform/alerts</code></td><td><span class="st st-done">已实现</span></td><td>规则引擎、去重、自动解除、通知；由 Celery beat 定时扫描</td></tr>
+    <tr><td><code>platform/audit</code></td><td><span class="st st-done">已实现</span></td><td>操作日志（单据时间线）；采购单字段变更历史（django-simple-history）</td></tr>
+    <tr><td><code>platform/notifications</code></td><td><span class="st st-part">部分实现</span></td><td>站内信、邮件渠道、渠道注册表；用户订阅偏好、每日汇总、企业微信和钉钉渠道还没做</td></tr>
+    <tr><td><code>platform/attachments</code></td><td><span class="st st-part">部分实现</span></td><td>通用附件，下载时校验权限；目前只存本地磁盘，S3 / OSS 未接</td></tr>
+    <tr><td><code>platform/integrations</code></td><td><span class="st st-part">部分实现</span></td><td>ERP 适配器接口、模拟金蝶适配器、同步任务、外部 ID 映射；真实金蝶 WebAPI 未接</td></tr>
+    <tr><td><code>platform/importer</code></td><td><span class="st st-todo">未开始</span></td><td>Excel / 单据导入引擎</td></tr>
+    <tr><td><code>platform/ai</code></td><td><span class="st st-todo">未开始</span></td><td>AI 辅助：列映射建议、邮件解析、报表摘要</td></tr>
+    <tr><td><code>trade/masterdata</code></td><td><span class="st st-part">部分实现</span></td><td>供应商、客户、商品（品番、JAN、箱入数、废番）；门店、仓库、供应商商品关系还没做</td></tr>
+    <tr><td><code>trade/purchasing</code></td><td><span class="st st-done">已实现</span></td><td>采购单、明细、生产节点、交期变更、预警规则、事件订阅、ERP 推送</td></tr>
+    <tr><td><code>trade/shipping</code></td><td><span class="st st-part">部分实现</span></td><td>出货记录；报关、货代的系统对接还没做</td></tr>
+    <tr><td><code>trade/sales</code></td><td><span class="st st-todo">未开始</span></td><td>客户订单（首单 / 翻单）</td></tr>
+    <tr><td><code>trade/finance</code></td><td><span class="st st-todo">未开始</span></td><td>供应商发票对账、货款、罚款</td></tr>
+    <tr><td><code>trade/replenishment</code></td><td><span class="st st-todo">未开始</span></td><td>销量 / 库存快照、补货建议</td></tr>
+    <tr><td><code>workbench</code> / <code>portal</code></td><td><span class="st st-done">已实现</span></td><td>内部工作台、供应商门户，支持手机访问</td></tr>
+    <tr><td>扩展字段 <code>FieldDefinition</code></td><td><span class="st st-part">部分实现</span></td><td>核心模型已有 <code>extra</code> JSON 字段；字段定义表和表单渲染还没做</td></tr>
+    <tr><td>国际化</td><td><span class="st st-part">部分实现</span></td><td>i18n 已开启，模型字段已用 gettext 标注；日文界面还没翻译</td></tr>
+    <tr><td>部署</td><td><span class="st st-todo">未开始</span></td><td>目前只有开发用的 docker-compose（PostgreSQL + Redis）；生产镜像、nginx、备份还没做</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+<h2><span class="num">7</span>本地运行</h2>
+<p>需要 Docker 和 <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv</a>。</p>
+<pre><code># 1. 启动 PostgreSQL（端口 5436）和 Redis（端口 6381），两者都只监听本机
+docker compose up -d --wait
+
+# 2. 安装依赖、建表、导入演示数据
+uv sync
+uv run python manage.py migrate
+uv run python manage.py seed_demo              # 账号使用随机密码，写入 .demo-credentials
+# 只在本机演示、想用简单密码时：seed_demo --simple-passwords
+# 重建数据：seed_demo --reset
+
+# 3. 启动 Web（终端 1）和 Celery worker + beat（终端 2）
+uv run python manage.py runserver 8010
+uv run celery -A config worker -B -Q default,sync,notify -c 1 -l info</code></pre>
+<p>浏览器打开 <code>http://localhost:8010/</code> 。用 <code>cat .demo-credentials</code> 查看演示账号的密码。</p>
+<div class="note">
+  <p><strong>在云服务器上用公网访问时：</strong>把 <code>.env.example</code> 复制成 <code>.env</code>，然后：</p>
+  <ul>
+    <li><code>DJANGO_ALLOWED_HOSTS</code> 加上服务器的 IP 或域名</li>
+    <li>设置 <code>DJANGO_DEBUG=false</code></li>
+    <li>把 <code>DJANGO_SECRET_KEY</code> 换成随机值</li>
+  </ul>
+  <p>静态文件由 WhiteNoise 提供，关闭调试模式后样式照常加载：</p>
+  <pre><code>uv run python manage.py runserver 0.0.0.0:8000</code></pre>
+  <p><strong>注意：</strong>修改 <code>.env</code> 后要完全停止再重新启动服务，开发服务器的自动重载不会重新读取 <code>.env</code>。</p>
+</div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+<h2><span class="num">8</span>演示脚本（约 10 分钟）</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>账号</th><th>角色</th><th>登录后进入</th></tr></thead>
+  <tbody>
+    <tr><td><code>zhang</code> / <code>li</code></td><td>跟单员（内部）</td><td>跟单看板、采购单、预警中心、ERP 同步</td></tr>
+    <tr><td><code>admin</code></td><td>管理员</td><td>同上，外加管理后台（主数据、预警规则阈值等）</td></tr>
+    <tr><td><code>huamei</code> / <code>jiabao</code> / <code>yongxing</code></td><td>供应商</td><td>供应商门户</td></tr>
+  </tbody>
+</table></div>
+<ol>
+  <li><strong>跟单看板（<code>zhang</code>）：</strong>先看顶部的数字，再看卡片边框的颜色。</li>
+  <li><strong>逾期单：</strong>打开红色边框的那张单，看交期变更记录、超期的生产节点和操作时间线。</li>
+  <li><strong>新建并提交采购单：</strong>选供应商"南通华美家纺"，加上商品，保存后提交。详情页会出现 ERP 采购订单号，供应商会收到通知。</li>
+  <li><strong>供应商确认（<code>huamei</code>）：</strong>在门户里确认交期，或者选"拒绝 / 要求改单"并写原因；之后更新生产节点、上传附件。</li>
+  <li><strong>回到跟单员：</strong>通知铃铛上有新消息；预警中心可以点"立即扫描"。</li>
+  <li><strong>客户专属规则：</strong>对"待出货"的那张单点"确认出货"，会被拦下，要求先上传装箱单。</li>
+  <li><strong>废番拦截：</strong>提交那张含旧款毛巾的草稿，会被拦下。</li>
+  <li><strong>行级隔离：</strong>换 <code>jiabao</code> 登录，看不到华美家纺的任何采购单；直接改网址访问也会返回 404。</li>
+</ol>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+<h2><span class="num">9</span>账号与安全</h2>
+<h3>已经做到的</h3>
+<ul>
+  <li><strong>行级隔离：</strong>供应商的所有查询都经过 <code>for_user()</code>，访问别家供应商的数据一律返回 404，测试覆盖了这一点。</li>
+  <li><strong>附件：</strong>不直接对外提供文件目录，下载时按所属采购单校验权限。</li>
+  <li><strong>演示账号：</strong>默认使用随机密码，保存在权限为 600 的 <code>.demo-credentials</code> 里，终端不打印明文。
+    <ul>
+      <li><code>rotate_demo_passwords</code> 可以一键更换所有演示账号的密码，旧密码和已登录的会话会立即失效。</li>
+      <li>登录页默认不列出演示账号，由 <code>ORDERPILOT_SHOW_DEMO_ACCOUNTS</code> 控制。</li>
+    </ul>
+  </li>
+  <li><strong>关闭调试模式：</strong>出错时不展示代码、配置和网址结构；静态文件改由 WhiteNoise 提供，不再依赖调试模式。</li>
+  <li><strong>登录防暴力破解：</strong>同一用户名和 IP 连续失败 5 次后锁定 1 小时（django-axes）。</li>
+  <li><strong>数据库和 Redis 只监听本机：</strong>外网连不上。Docker 会绕过 ufw 防火墙，所以直接把端口绑定在 <code>127.0.0.1</code>。</li>
+  <li><strong>浏览器安全头：</strong>禁止页面被嵌入其他网站、禁止浏览器猜测文件类型；配好 HTTPS 后设置 <code>DJANGO_HTTPS=true</code>，即启用安全 Cookie、HTTPS 跳转和 HSTS。</li>
+  <li><strong>配置：</strong>密钥、调试开关、允许访问的域名都从环境变量读取；<code>.env</code> 和凭据文件都被 git 忽略。</li>
+</ul>
+<div class="callout">
+  <p><strong>对外长期使用前还需要解决：</strong></p>
+  <ul>
+    <li>目前是 HTTP，密码在网络上明文传输，需要配域名和 HTTPS。</li>
+    <li><code>runserver</code> 只适合开发和演示，生产环境要换成 gunicorn + nginx。</li>
+    <li>还没有双因素认证。</li>
+    <li>公网上的自动扫描是常态（部署几分钟内就会出现）。云服务器安全组应只放行必要的端口，演示期间最好只允许自己的 IP 访问。</li>
+  </ul>
+</div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+<h2><span class="num">10</span>测试与质量</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>测试文件</th><th>数量</th><th>覆盖内容</th></tr></thead>
+  <tbody>
+    <tr><td><code>test_workflow.py</code></td><td>11</td><td>草稿到出货的完整流程、权限（供应商不能执行内部操作、不能操作别家的单）、状态校验、废番拦截、客户扩展规则、提交后的通知和 ERP 推送、交期变更</td></tr>
+    <tr><td><code>test_scoping.py</code></td><td>6</td><td>门户行级隔离（404）、隐藏草稿、附件下载权限、供应商看不到终端客户和内部备注</td></tr>
+    <tr><td><code>test_pages.py</code></td><td>8</td><td>主要页面都能正常渲染，表单新建采购单</td></tr>
+    <tr><td><code>test_alerts.py</code></td><td>4</td><td>预警触发、去重、自动解除、按生产节点分别报警、停用规则</td></tr>
+    <tr><td><code>test_security.py</code></td><td>4</td><td>关闭调试模式后静态文件照常提供、404 页不泄露调试信息、连续登录失败后锁定、安全响应头</td></tr>
+    <tr><td><code>test_demo_accounts.py</code></td><td>3</td><td>登录页隐藏演示账号、随机换密码、凭据文件权限</td></tr>
+    <tr><td><code>test_sync.py</code></td><td>2</td><td>主数据同步可重复执行、同步失败时有记录</td></tr>
+  </tbody>
+</table></div>
+<ul>
+  <li>运行 <code>uv run pytest</code>（需要先启动 PostgreSQL）；代码规范检查用 <code>uv run ruff check .</code>，目前全部通过。</li>
+  <li>除了自动化测试，还用真实的 Celery worker 手工做过端到端验证：提交采购单后，通知投递和 ERP 推送都正常完成。</li>
+</ul>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+<h2><span class="num">11</span>暂未实现与下一步</h2>
+<h3>MVP 暂未包含</h3>
+<ul>
+  <li>真实的金蝶云星空 WebAPI 适配器：接口已经定义好，需要客户的测试账套</li>
+  <li>Excel 导入、补货建议、客户订单、发票对账和罚款</li>
+  <li>企业微信、钉钉通知渠道；真实的邮件发送</li>
+  <li>日文界面、生产环境部署</li>
+</ul>
+<h3>建议的下一步</h3>
+<ol>
+  <li><strong>带着 MVP 去访谈：</strong>按照<a href="research/interview-guide.html">访谈提纲</a>，找 3–5 位跟单员和老板，先听他们讲实际流程，最后再演示系统，收集"这里不对，我们其实是这样做的"这类反馈。</li>
+  <li><strong>根据反馈决定第二个模块：</strong>补货建议和发票罚款二选一，看哪个痛点更集中。</li>
+  <li><strong>找一家愿意试点的公司：</strong>拿到金蝶测试账套，写真实适配器，并用 Excel 导入他们的历史数据。</li>
+</ol>
+</section>
+
+<footer>
+  OrderPilot · MVP 系统现状 · 2026-09-16 · <a href="index.html">架构设计</a> · <a href="research/interview-guide.html">跟单业务访谈提纲</a>
+</footer>
+
+</main>
+</div>
+
+<script>
+  // 手机上目录默认收起
+  if (window.matchMedia('(max-width: 900px)').matches) {
+    var d = document.querySelector('nav.toc details');
+    if (d) d.removeAttribute('open');
+  }
+  // 目录高亮
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a.item'));
+    var map = {};
+    links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+    var sections = Array.prototype.slice.call(document.querySelectorAll('main section[id]'));
+    if (!('IntersectionObserver' in window)) return;
+    var visible = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting; });
+      var current = sections.find(function (s) { return visible[s.id]; });
+      if (!current) return;
+      links.forEach(function (a) { a.classList.remove('active'); });
+      if (map[current.id]) map[current.id].classList.add('active');
+    }, { rootMargin: '0px 0px -70% 0px' });
+    sections.forEach(function (s) { io.observe(s); });
+  })();
+</script>
+</body>
+</html>
