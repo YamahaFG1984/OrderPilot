@@ -1,0 +1,32 @@
+{% extends "_base.html" %}
+{% block title %}登录{% endblock %}
+{% block body %}
+<main class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-lg">OrderPilot</div>
+    <p class="muted" style="margin:4px 0 0">智能跟单工作台 · 内部员工与供应商共用登录入口</p>
+    {% if form.errors %}<div class="flash flash-error" style="margin-top:14px">用户名或密码不正确</div>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <label class="field"><span>用户名</span><input type="text" name="username" autofocus required value="{{ form.username.value|default:'' }}"></label>
+      <label class="field"><span>密码</span><input type="password" name="password" required></label>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary btn-block" type="submit">登录</button>
+    </form>
+    {% if show_demo_accounts %}
+    <details class="demo-accounts">
+      <summary>演示账号</summary>
+      <p class="muted small">密码见服务器上的 <code>.demo-credentials</code>；用 <code>seed_demo --simple-passwords</code> 导入时均为 demo1234。</p>
+      <table class="table compact">
+        <tr><td class="mono">zhang</td><td>跟单员 张伟（内部）</td></tr>
+        <tr><td class="mono">li</td><td>跟单员 李娜（内部）</td></tr>
+        <tr><td class="mono">admin</td><td>系统管理员</td></tr>
+        <tr><td class="mono">huamei</td><td>供应商：南通华美家纺</td></tr>
+        <tr><td class="mono">jiabao</td><td>供应商：义乌嘉宝日用品</td></tr>
+        <tr><td class="mono">yongxing</td><td>供应商：宁波永兴塑胶</td></tr>
+      </table>
+    </details>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

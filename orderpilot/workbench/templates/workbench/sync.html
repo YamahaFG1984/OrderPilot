@@ -1,0 +1,15 @@
+{% extends "workbench/base.html" %}
+{% block title %}ERP 同步{% endblock %}
+{% block heading %}ERP 同步{% endblock %}
+{% block content %}
+<div class="card">
+  <h3>金蝶云星空 · 主数据同步</h3>
+  <p class="muted">
+    当前使用<b>模拟金蝶适配器</b>：从本地 JSON 读取金蝶风格的供应商、客户、物料数据（字段名沿用 FNumber / FName / FForbidStatus）。
+    同步按外部 ID 匹配，重复执行不会产生重复数据；金蝶里「禁用」的物料会同步为「废番」。
+    采购单提交后会自动推送到 ERP，生成采购订单号。拿到真实测试账套后，只需替换适配器。
+  </p>
+  <form method="post" action="{% url 'workbench:sync_start' %}">{% csrf_token %}<button class="btn btn-primary" type="submit">从 ERP 同步主数据</button></form>
+</div>
+{% include "workbench/_sync_jobs.html" %}
+{% endblock %}

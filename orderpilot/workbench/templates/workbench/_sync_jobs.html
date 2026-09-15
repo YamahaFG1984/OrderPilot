@@ -1,0 +1,27 @@
+<div id="sync-jobs" class="card list"
+     {% if has_active %}hx-get="{% url 'workbench:sync_jobs' %}" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>#</th><th>时间</th><th>方向</th><th>数据</th><th>状态</th><th>结果</th><th class="num">耗时</th><th>触发人</th></tr></thead>
+      <tbody>
+      {% for j in jobs %}
+        <tr>
+          <td class="mono small">{{ j.pk }}</td>
+          <td class="small">{{ j.created_at|date:"m-d H:i:s" }}</td>
+          <td>{{ j.get_direction_display }}</td>
+          <td class="mono small">{{ j.entity }}</td>
+          <td><span class="badge {% if j.status == 'success' %}due-ok{% elif j.status == 'failed' %}due-overdue{% else %}due-soon{% endif %}">{{ j.get_status_display }}</span></td>
+          <td>
+            {% for k, v in j.stats.items %}<span class="chip">{{ k }} {{ v }}</span>{% endfor %}
+            {% if j.error %}<details><summary class="small">查看错误</summary><pre class="error">{{ j.error }}</pre></details>{% endif %}
+          </td>
+          <td class="num small">{% if j.duration_seconds is not None %}{{ j.duration_seconds }}s{% endif %}</td>
+          <td class="small">{{ j.triggered_by|default:"系统" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="empty">还没有同步记录</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

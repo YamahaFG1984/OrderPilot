@@ -1,0 +1,32 @@
+{% if milestones %}
+<div class="card">
+  <h3>生产节点{% if can_reply %} <span class="muted small">可直接修改日期后保存</span>{% endif %}</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>节点</th><th>计划日期</th><th>实际日期</th><th>状态</th>{% if can_reply %}<th></th>{% endif %}</tr></thead>
+      <tbody>
+      {% for m in milestones %}
+        <tr{% if m.overdue_days %} class="row-warn"{% endif %}>
+          <td>{{ m.get_kind_display }}</td>
+          {% if can_reply %}
+          <td><input type="date" name="planned_date" value="{{ m.planned_date|date:'Y-m-d' }}" form="ms-{{ m.pk }}"></td>
+          <td><input type="date" name="actual_date" value="{{ m.actual_date|date:'Y-m-d' }}" form="ms-{{ m.pk }}"></td>
+          {% else %}
+          <td>{{ m.planned_date|date:"Y-m-d"|default:"—" }}</td>
+          <td>{{ m.actual_date|date:"Y-m-d"|default:"—" }}</td>
+          {% endif %}
+          <td>
+            {% if m.actual_date %}<span class="badge due-ok">已完成</span>
+            {% elif m.overdue_days %}<span class="badge due-overdue">超期 {{ m.overdue_days }} 天</span>
+            {% else %}<span class="muted small">未完成</span>{% endif %}
+          </td>
+          {% if can_reply %}
+          <td><form id="ms-{{ m.pk }}" method="post" action="{% url ns|add:':po_milestone' po.pk m.pk %}">{% csrf_token %}<button class="btn btn-sm" type="submit">保存</button></form></td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}

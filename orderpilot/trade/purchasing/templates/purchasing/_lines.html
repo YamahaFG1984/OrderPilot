@@ -1,0 +1,23 @@
+<div class="card">
+  <h3>商品明细 <span class="muted small">共 {{ total_qty }} 件{% if total_amount %} · ¥{{ total_amount|floatformat:2 }}{% endif %}</span></h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>品番</th><th>品名</th><th>JAN</th><th class="num">数量</th><th class="num">箱数</th><th class="num">单价</th><th class="num">金额</th></tr></thead>
+      <tbody>
+      {% for l in lines %}
+        <tr>
+          <td class="mono">{{ l.product.part_no }}{% if l.product.is_discontinued %} <span class="badge due-overdue">废番</span>{% endif %}</td>
+          <td>{{ l.product.name }}{% if l.product.name_ja %}<div class="muted small">{{ l.product.name_ja }}</div>{% endif %}</td>
+          <td class="mono small">{{ l.product.jan_code|default:"—" }}</td>
+          <td class="num">{{ l.quantity }}</td>
+          <td class="num">{{ l.cartons|floatformat:"-1" }}</td>
+          <td class="num">{{ l.unit_price|default:"—" }}</td>
+          <td class="num">{{ l.amount|floatformat:2|default:"—" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="empty">还没有商品</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

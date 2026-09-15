@@ -1,0 +1,20 @@
+{% extends request.user.is_internal|yesno:"workbench/base.html,portal/base.html" %}
+{% block title %}通知{% endblock %}
+{% block heading %}通知{% endblock %}
+{% block content %}
+<div class="section-head">
+  <p class="muted small">最近 100 条</p>
+  <form method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}<button class="btn btn-sm" type="submit">全部标为已读</button></form>
+</div>
+<div class="card list">
+  {% for n in notifications %}
+  <a class="noti{% if not n.is_read %} unread{% endif %}" href="{% url 'notifications:open' n.pk %}">
+    <div class="noti-title">{{ n.title }}</div>
+    {% if n.body %}<div class="noti-body">{{ n.body }}</div>{% endif %}
+    <div class="muted small">{{ n.created_at|date:"Y-m-d H:i" }}</div>
+  </a>
+  {% empty %}
+  <div class="empty">暂无通知</div>
+  {% endfor %}
+</div>
+{% endblock %}

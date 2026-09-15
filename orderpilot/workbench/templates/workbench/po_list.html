@@ -1,0 +1,66 @@
+{% extends "workbench/base.html" %}
+{% load po_tags %}
+{% block title %}采购单{% endblock %}
+{% block heading %}采购单{% endblock %}
+{% block topbar_actions %}<a class="btn btn-primary btn-sm" href="{% url 'workbench:po_create' %}">＋ 新建采购单</a>{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+  <label class="field grow"><span>搜索</span><input type="text" name="q" value="{{ q }}" placeholder="采购单号 / 品番 / 品名 / JAN"></label>
+  <label class="field"><span>状态</span>
+    <select name="status">
+      <option value="">全部状态</option>
+      <option value="active" {% if status == "active" %}selected{% endif %}>跟进中</option>
+      {% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="field"><span>供应商</span>
+    <select name="supplier">
+      <option value="">全部供应商</option>
+      {% for s in suppliers %}<option value="{{ s.pk }}" {% if supplier == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="field"><span>范围</span>
+    <select name="scope">
+      <option value="all" {% if scope == "all" %}selected{% endif %}>全部</option>
+      <option value="mine" {% if scope == "mine" %}selected{% endif %}>我负责的</option>
+    </select>
+  </label>
+  <button class="btn" type="submit">筛选</button>
+</form>
+
+<div class="card list">
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr>
+        <th>采购单号</th><th>状态</th><th>供应商</th><th>客户</th><th class="num">数量</th>
+        <th>要求交期</th><th>承诺交期</th><th>剩余</th><th>跟单员</th><th>预警</th>
+      </tr></thead>
+      <tbody>
+      {% for po in page.object_list %}
+        <tr>
+          <td><a class="mono" href="{% url 'workbench:po_detail' po.pk %}">{{ po.number }}</a></td>
+          <td>{% status_badge po %}</td>
+          <td>{{ po.supplier.name }}</td>
+          <td>{{ po.customer.name|default:"—" }}</td>
+          <td class="num">{{ po.total_qty|default:0 }}</td>
+          <td>{{ po.required_date|date:"Y-m-d" }}</td>
+          <td>{{ po.promised_date|date:"Y-m-d"|default:"—" }}</td>
+          <td>{% due_badge po %}</td>
+          <td>{{ po.owner }}</td>
+          <td>{% if po.open_alerts %}<span class="badge sev-{{ po.top_severity }}">{{ po.open_alerts|length }}</span>{% endif %}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="10" class="empty">没有符合条件的采购单</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if page.has_other_pages %}
+<div class="pager">
+  {% if page.has_previous %}<a class="btn btn-sm" href="?{% if q %}q={{ q|urlencode }}&{% endif %}status={{ status }}&supplier={{ supplier }}&scope={{ scope }}&page={{ page.previous_page_number }}">上一页</a>{% endif %}
+  <span class="muted small">第 {{ page.number }} / {{ page.paginator.num_pages }} 页</span>
+  {% if page.has_next %}<a class="btn btn-sm" href="?{% if q %}q={{ q|urlencode }}&{% endif %}status={{ status }}&supplier={{ supplier }}&scope={{ scope }}&page={{ page.next_page_number }}">下一页</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

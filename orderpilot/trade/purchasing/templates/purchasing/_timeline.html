@@ -1,0 +1,17 @@
+<div class="card">
+  <h3>操作记录</h3>
+  {% if activities %}
+  <ul class="timeline">
+    {% for a in activities %}
+    <li>
+      <div class="t-msg">{{ a.message }}</div>
+      {% if a.data.reason %}<div class="t-reason">原因：{{ a.data.reason }}</div>{% endif %}
+      {% if a.data.promised_date %}<div class="t-reason">承诺交期：{{ a.data.promised_date }}</div>{% endif %}
+      <div class="t-meta">{{ a.created_at|date:"m-d H:i" }} · {{ a.actor|default:"系统" }}</div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted small" style="margin:0">暂无记录</p>
+  {% endif %}
+</div>

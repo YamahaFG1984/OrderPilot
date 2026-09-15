@@ -1,0 +1,52 @@
+{% extends "workbench/base.html" %}
+{% load po_tags %}
+{% block title %}预警中心{% endblock %}
+{% block heading %}预警中心{% endblock %}
+{% block topbar_actions %}
+<form method="post" action="{% url 'workbench:alert_scan' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-sm" type="submit">立即扫描</button></form>
+{% endblock %}
+{% block content %}
+<div class="kpis">
+  {% for value, label in severities %}
+  <a class="kpi" href="?status=open&severity={{ value }}" style="color:inherit;text-decoration:none">
+    <div class="kpi-label">{{ label }}（未解除）</div>
+    <div class="kpi-value sev-text-{{ value }}">{{ counts|get_item:value }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="section-head">
+  <div class="seg">
+    <a href="?status=open" class="{% if status == 'open' %}on{% endif %}">未解除</a>
+    <a href="?status=resolved" class="{% if status == 'resolved' %}on{% endif %}">已解除</a>
+    <a href="?status=all" class="{% if status == 'all' %}on{% endif %}">全部</a>
+  </div>
+  <p class="muted small">系统每分钟自动扫描一次；条件不再成立的预警会自动解除。规则阈值可在管理后台「预警规则」调整。</p>
+</div>
+
+<div class="card list">
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>级别</th><th>预警</th><th>规则</th><th>首次触发</th><th>状态</th><th></th></tr></thead>
+      <tbody>
+      {% for a in alerts %}
+        <tr>
+          <td>{% severity_badge a %}</td>
+          <td><a href="{{ a.url }}">{{ a.title }}</a>{% if a.message %}<div class="muted small">{{ a.message }}</div>{% endif %}</td>
+          <td class="small">{{ a.rule.name }}</td>
+          <td class="small">{{ a.first_seen_at|date:"m-d H:i" }}</td>
+          <td class="small">{{ a.get_status_display }}{% if a.acknowledged_by %}<div class="muted">{{ a.acknowledged_by }}</div>{% endif %}</td>
+          <td>
+            {% if a.status == "open" %}
+            <form method="post" action="{% url 'workbench:alert_ack' a.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-sm" type="submit">知悉</button></form>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="empty">没有预警 🎉</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "portal/base.html" %}
+{% block title %}{{ po.number }}{% endblock %}
+{% block heading %}<a class="muted" href="{% url 'portal:home' %}">我的采购单</a> / <span class="mono">{{ po.number }}</span>{% endblock %}
+{% block content %}
+{% include "purchasing/_po_header.html" %}
+<div class="detail-grid">
+  <div>
+    {% include "purchasing/_po_info.html" %}
+    {% include "purchasing/_lines.html" %}
+    {% include "purchasing/_milestones.html" %}
+    {% include "purchasing/_date_changes.html" %}
+    {% include "purchasing/_shipments.html" %}
+    {% include "purchasing/_attachments.html" %}
+  </div>
+  <aside>
+    {% include "purchasing/_timeline.html" %}
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,2 @@
+<a class="bell" href="{% url 'notifications:list' %}" title="通知"
+   hx-get="{% url 'notifications:bell' %}" hx-trigger="every 30s" hx-swap="outerHTML">通知{% if count %}<span class="bell-count">{{ count }}</span>{% endif %}</a>

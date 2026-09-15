@@ -1,0 +1,32 @@
+<div class="card">
+  <h3>附件 <span class="count">{{ attachments|length }}</span></h3>
+  {% if can_upload %}
+  <form class="inline-form" method="post" enctype="multipart/form-data" action="{% url ns|add:':po_upload' po.pk %}">
+    {% csrf_token %}
+    {% include "_field.html" with field=attachment_form.kind %}
+    {% include "_field.html" with field=attachment_form.file %}
+    {% include "_field.html" with field=attachment_form.note %}
+    <button class="btn" type="submit">上传</button>
+  </form>
+  {% endif %}
+  {% if attachments %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>类型</th><th>文件</th><th>备注</th><th>上传人</th><th>时间</th></tr></thead>
+      <tbody>
+      {% for a in attachments %}
+        <tr>
+          <td><span class="badge">{{ a.get_kind_display }}</span></td>
+          <td><a href="{% url 'attachments:download' a.pk %}">{{ a.original_name }}</a></td>
+          <td class="small">{{ a.note }}</td>
+          <td class="small">{{ a.uploaded_by|default:"—" }}</td>
+          <td class="small">{{ a.uploaded_at|date:"m-d H:i" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted small" style="margin:0">还没有附件。</p>
+  {% endif %}
+</div>

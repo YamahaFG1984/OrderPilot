@@ -1,0 +1,13 @@
+{% load static %}<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{% endblock %} · OrderPilot</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+<script src="{% static 'vendor/htmx.min.js' %}" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+{% block body %}{% endblock %}
+</body>
+</html>

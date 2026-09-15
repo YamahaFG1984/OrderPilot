@@ -1,0 +1,33 @@
+{% extends "_base.html" %}
+{% block body %}
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="{% url 'workbench:dashboard' %}">OrderPilot</a>
+    {% with u=request.resolver_match.url_name %}
+    <nav>
+      <a href="{% url 'workbench:dashboard' %}" class="{% if u == 'dashboard' %}active{% endif %}">跟单看板</a>
+      <a href="{% url 'workbench:po_list' %}" class="{% if u == 'po_list' or u == 'po_detail' or u == 'po_edit' %}active{% endif %}">采购单</a>
+      <a href="{% url 'workbench:po_create' %}" class="{% if u == 'po_create' %}active{% endif %}">新建采购单</a>
+      <a href="{% url 'workbench:alerts' %}" class="{% if u == 'alerts' %}active{% endif %}">预警中心</a>
+      <a href="{% url 'workbench:sync' %}" class="{% if u == 'sync' %}active{% endif %}">ERP 同步</a>
+      {% if request.user.is_staff %}<a href="{% url 'admin:index' %}">管理后台</a>{% endif %}
+    </nav>
+    {% endwith %}
+    <div class="sidebar-foot">
+      <div class="user"><b>{{ request.user }}</b><span class="muted small">内部员工</span></div>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="link small" type="submit">退出登录</button></form>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title">{% block heading %}{% endblock %}</div>
+      <div class="topbar-actions">
+        {% block topbar_actions %}{% endblock %}
+        {% include "notifications/_bell.html" with count=unread_notifications %}
+      </div>
+    </header>
+    {% include "_messages.html" %}
+    <div class="content">{% block content %}{% endblock %}</div>
+  </div>
+</div>
+{% endblock %}

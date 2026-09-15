@@ -1,0 +1,31 @@
+# 本地开发依赖：PostgreSQL + Redis
+# 端口避开本机其他项目占用的 5432 / 6379
+name: orderpilot
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: orderpilot
+      POSTGRES_USER: orderpilot
+      POSTGRES_PASSWORD: orderpilot
+    ports:
+      # 只绑定本机：数据库不对外暴露（Docker 会绕过 ufw，不能依赖本机防火墙）
+      - "127.0.0.1:5436:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orderpilot -d orderpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.2
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      # 只绑定本机：Redis 没有密码，绝不能对外暴露
+      - "127.0.0.1:6381:6379"
+
+volumes:
+  pgdata: {}

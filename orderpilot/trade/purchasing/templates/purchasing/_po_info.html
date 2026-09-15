@@ -1,0 +1,22 @@
+<div class="card">
+  <h3>基本信息</h3>
+  <dl class="kv">
+    <div><dt>供应商</dt><dd>{{ po.supplier.name }}</dd></div>
+    {% if ns == "workbench" %}
+    <div><dt>客户</dt><dd>{{ po.customer.name|default:"—" }}</dd></div>
+    <div><dt>跟单员</dt><dd>{{ po.owner }}</dd></div>
+    {% endif %}
+    <div><dt>下单日期</dt><dd>{{ po.order_date|date:"Y-m-d" }}</dd></div>
+    <div><dt>要求交期</dt><dd>{{ po.required_date|date:"Y-m-d" }}</dd></div>
+    <div><dt>承诺交期</dt><dd>
+      {% if po.promised_date %}{{ po.promised_date|date:"Y-m-d" }}
+        {% if po.promised_delay_days > 0 %} <span class="badge due-soon">晚于要求 {{ po.promised_delay_days }} 天</span>{% endif %}
+      {% else %}<span class="muted">未确认</span>{% endif %}
+    </dd></div>
+    {% if ns == "workbench" %}
+    <div><dt>ERP 采购订单号</dt><dd>{% if erp_ref %}<span class="mono">{{ erp_ref.external_number }}</span>{% else %}<span class="muted">未同步</span>{% endif %}</dd></div>
+    {% endif %}
+  </dl>
+  {% if po.note %}<p class="note"><b>给供应商的备注：</b>{{ po.note|linebreaksbr }}</p>{% endif %}
+  {% if ns == "workbench" and po.internal_note %}<p class="note internal"><b>内部备注（供应商不可见）：</b>{{ po.internal_note|linebreaksbr }}</p>{% endif %}
+</div>

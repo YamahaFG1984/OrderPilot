@@ -1,0 +1,12 @@
+{% extends "_base.html" %}
+{% block title %}登录已暂时锁定{% endblock %}
+{% block body %}
+<main class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-lg">OrderPilot</div>
+    <div class="flash flash-error" style="margin-top:14px">登录失败次数过多，该账号在当前网络下已被暂时锁定。</div>
+    <p class="muted">请稍后再试。如果需要立即解锁，请联系系统管理员。</p>
+    <a class="btn btn-block" href="{% url 'login' %}">返回登录页</a>
+  </div>
+</main>
+{% endblock %}

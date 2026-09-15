@@ -1,0 +1,32 @@
+{% if date_form or date_changes %}
+<div class="card">
+  <h3>交期变更</h3>
+  {% if date_form %}
+  <form class="inline-form" method="post" action="{% url ns|add:':po_change_date' po.pk %}">
+    {% csrf_token %}
+    {% include "_field.html" with field=date_form.new_date %}
+    {% include "_field.html" with field=date_form.reason %}
+    <button class="btn" type="submit">修改交期</button>
+  </form>
+  {% endif %}
+  {% if date_changes %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>时间</th><th>原交期</th><th>新交期</th><th>变化</th><th>原因</th><th>变更人</th></tr></thead>
+      <tbody>
+      {% for c in date_changes %}
+        <tr>
+          <td class="small">{{ c.created_at|date:"m-d H:i" }}</td>
+          <td>{{ c.old_date|date:"Y-m-d"|default:"—" }}</td>
+          <td>{{ c.new_date|date:"Y-m-d" }}</td>
+          <td>{% if c.delta_days > 0 %}<span class="badge due-overdue">推迟 {{ c.delta_days }} 天</span>{% elif c.delta_days < 0 %}<span class="badge due-ok">提前 {{ c.delta_days|stringformat:"d"|slice:"1:" }} 天</span>{% else %}<span class="muted small">首次确认</span>{% endif %}</td>
+          <td>{{ c.reason }}</td>
+          <td class="small">{{ c.changed_by|default:"—" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

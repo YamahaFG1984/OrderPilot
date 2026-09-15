@@ -1,0 +1,50 @@
+{% extends "workbench/base.html" %}
+{% block title %}{% if is_new %}新建采购单{% else %}编辑 {{ po.number }}{% endif %}{% endblock %}
+{% block heading %}{% if is_new %}新建采购单{% else %}编辑 <span class="mono">{{ po.number }}</span>{% endif %}{% endblock %}
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  <div class="card">
+    <h3>基本信息</h3>
+    {% if form.non_field_errors %}<div class="flash flash-error">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="form-grid">
+      {% include "_field.html" with field=form.supplier %}
+      {% include "_field.html" with field=form.customer %}
+      {% include "_field.html" with field=form.owner %}
+      {% include "_field.html" with field=form.order_date %}
+      {% include "_field.html" with field=form.required_date %}
+      {% include "_field.html" with field=form.note span=True %}
+      {% include "_field.html" with field=form.internal_note span=True %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>商品明细</h3>
+    {{ formset.management_form }}
+    {% if formset.non_form_errors %}<div class="flash flash-error">{{ formset.non_form_errors }}</div>{% endif %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th style="min-width:260px">商品</th><th style="width:120px">数量</th><th style="width:120px">单价</th><th>备注</th><th style="width:60px">删除</th></tr></thead>
+        <tbody>
+        {% for f in formset %}
+          <tr>
+            <td>{{ f.id }}{{ f.product }}{% for e in f.product.errors %}<small class="err">{{ e }}</small>{% endfor %}</td>
+            <td>{{ f.quantity }}{% for e in f.quantity.errors %}<small class="err">{{ e }}</small>{% endfor %}</td>
+            <td>{{ f.unit_price }}</td>
+            <td>{{ f.note }}</td>
+            <td>{% if f.instance.pk %}{{ f.DELETE }}{% endif %}</td>
+          </tr>
+          {% if f.non_field_errors %}<tr><td colspan="5"><small class="err">{{ f.non_field_errors }}</small></td></tr>{% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted small" style="margin:12px 0 0">空行会被忽略；需要更多行时，先保存再编辑。</p>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">保存草稿</button>
+    <a class="btn" href="{% if is_new %}{% url 'workbench:po_list' %}{% else %}{% url 'workbench:po_detail' po.pk %}{% endif %}">取消</a>
+  </div>
+</form>
+{% endblock %}

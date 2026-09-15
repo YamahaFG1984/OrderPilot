@@ -1,0 +1,22 @@
+{% if shipments %}
+<div class="card">
+  <h3>出货信息</h3>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>出货日期</th><th>货代</th><th>提单号 / 运单号</th><th>柜号</th><th>预计到港</th><th>备注</th></tr></thead>
+      <tbody>
+      {% for s in shipments %}
+        <tr>
+          <td>{{ s.ship_date|date:"Y-m-d" }}</td>
+          <td>{{ s.forwarder|default:"—" }}</td>
+          <td class="mono">{{ s.tracking_no|default:"—" }}</td>
+          <td class="mono">{{ s.container_no|default:"—" }}</td>
+          <td>{{ s.eta|date:"Y-m-d"|default:"—" }}</td>
+          <td>{{ s.note|default:"" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}

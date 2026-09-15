@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+{% block body %}
+<header class="portal-bar">
+  <a class="brand" href="{% url 'portal:home' %}">OrderPilot<span class="brand-sub">供应商门户</span></a>
+  <div class="portal-bar-right">
+    <span class="muted small">{{ request.user.supplier.name }} · {{ request.user }}</span>
+    {% include "notifications/_bell.html" with count=unread_notifications %}
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="link small" type="submit">退出</button></form>
+  </div>
+</header>
+<main class="portal-main">
+  {% include "_messages.html" %}
+  <h1 class="page-title">{% block heading %}{% endblock %}</h1>
+  {% block content %}{% endblock %}
+</main>
+{% endblock %}

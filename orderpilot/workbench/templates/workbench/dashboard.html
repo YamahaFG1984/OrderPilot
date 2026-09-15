@@ -1,0 +1,42 @@
+{% extends "workbench/base.html" %}
+{% load po_tags %}
+{% block title %}跟单看板{% endblock %}
+{% block heading %}跟单看板{% endblock %}
+{% block topbar_actions %}
+<div class="seg">
+  <a href="?scope=mine" class="{% if scope == 'mine' %}on{% endif %}">我负责的</a>
+  <a href="?scope=all" class="{% if scope == 'all' %}on{% endif %}">全部</a>
+</div>
+<a class="btn btn-primary btn-sm" href="{% url 'workbench:po_create' %}">＋ 新建采购单</a>
+{% endblock %}
+{% block content %}
+<div class="kpis">
+  {% for k in kpis %}
+  <div class="kpi {{ k.tone }}"><div class="kpi-label">{{ k.label }}</div><div class="kpi-value">{{ k.value }}</div></div>
+  {% endfor %}
+</div>
+
+<div class="board">
+  {% for col in columns %}
+  <section class="col">
+    <header class="col-head"><span>{{ col.label }}</span><span class="count">{{ col.pos|length }}</span></header>
+    {% for po in col.pos %}
+    <a class="po-card{% if po.top_severity %} sev-edge-{{ po.top_severity }}{% endif %}" href="{% url 'workbench:po_detail' po.pk %}">
+      <div class="po-card-top"><span class="mono">{{ po.number }}</span>{% due_badge po %}</div>
+      <div class="po-card-supplier">{{ po.supplier.name }}</div>
+      <div class="muted small">{{ po.customer.name|default:"—" }} · {{ po.total_qty|default:0 }} 件</div>
+      <div class="po-card-foot">
+        <span>{% if po.promised_date %}承诺{% else %}要求{% endif %} {{ po.expected_date|date:"m-d" }}</span>
+        <span>{{ po.owner }}</span>
+      </div>
+      {% if po.open_alerts %}
+      <div class="po-card-alert sev-text-{{ po.top_severity }}">⚠ {{ po.open_alerts.0.rule.name }}{% if po.open_alerts|length > 1 %} 等 {{ po.open_alerts|length }} 条{% endif %}</div>
+      {% endif %}
+    </a>
+    {% empty %}
+    <div class="empty small">暂无</div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

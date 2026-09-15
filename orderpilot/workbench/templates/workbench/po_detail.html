@@ -1,0 +1,34 @@
+{% extends "workbench/base.html" %}
+{% load po_tags %}
+{% block title %}{{ po.number }}{% endblock %}
+{% block heading %}<a class="muted" href="{% url 'workbench:po_list' %}">采购单</a> / <span class="mono">{{ po.number }}</span>{% endblock %}
+{% block content %}
+{% include "purchasing/_po_header.html" %}
+<div class="detail-grid">
+  <div>
+    {% include "purchasing/_po_info.html" %}
+    {% include "purchasing/_lines.html" %}
+    {% include "purchasing/_milestones.html" %}
+    {% include "purchasing/_date_changes.html" %}
+    {% include "purchasing/_shipments.html" %}
+    {% include "purchasing/_attachments.html" %}
+  </div>
+  <aside>
+    {% if alerts %}
+    <div class="card">
+      <h3>预警 <span class="count">{{ alerts|length }}</span></h3>
+      {% for a in alerts %}
+      <div class="alert-row">
+        {% severity_badge a %}
+        <span>{{ a.title }}{% if a.message %}<div class="muted small">{{ a.message }}</div>{% endif %}</span>
+        {% if a.status == "open" %}
+        <form method="post" action="{% url 'workbench:alert_ack' a.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button class="link small" type="submit">知悉</button></form>
+        {% else %}<span class="muted small">已知悉</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% include "purchasing/_timeline.html" %}
+  </aside>
+</div>
+{% endblock %}

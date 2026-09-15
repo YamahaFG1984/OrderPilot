@@ -1,0 +1,24 @@
+{
+  "_comment": "模拟金蝶云星空导出的基础资料（虚构数据）。F_ 开头为客户自定义字段。",
+  "BD_Supplier": [
+    {"FSupplierId": 100101, "FNumber": "VEN0001", "FName": "南通华美家纺有限公司", "FContact": "王丽", "FTel": "0513-8000-1001", "FEmail": "wangli@example.com", "F_LeadTime": 35, "FForbidStatus": "A"},
+    {"FSupplierId": 100102, "FNumber": "VEN0002", "FName": "义乌嘉宝日用品有限公司", "FContact": "陈强", "FTel": "0579-8500-2002", "FEmail": "chenqiang@example.com", "F_LeadTime": 25, "FForbidStatus": "A"},
+    {"FSupplierId": 100103, "FNumber": "VEN0003", "FName": "宁波永兴塑胶制品厂", "FContact": "刘洋", "FTel": "0574-8700-3003", "FEmail": "liuyang@example.com", "F_LeadTime": 30, "FForbidStatus": "A"}
+  ],
+  "BD_Customer": [
+    {"FCUSTID": 200101, "FNumber": "CUST001", "FName": "東京生活雑貨株式会社", "FCurrency": "JPY", "FForbidStatus": "A"},
+    {"FCUSTID": 200102, "FNumber": "CUST002", "FName": "大阪ホームストア株式会社", "FCurrency": "JPY", "FForbidStatus": "A"}
+  ],
+  "BD_MATERIAL": [
+    {"FMATERIALID": 300101, "FNumber": "HM-TW-3460", "FName": "纯棉面巾 34×60", "F_NameJa": "綿フェイスタオル 34×60", "FBARCODE": "4580000100011", "F_CartonQty": 120, "F_DefaultSupplier": "VEN0001", "FForbidStatus": "A"},
+    {"FMATERIALID": 300102, "FNumber": "HM-TW-6012", "FName": "纯棉浴巾 60×120", "F_NameJa": "綿バスタオル 60×120", "FBARCODE": "4580000100028", "F_CartonQty": 40, "F_DefaultSupplier": "VEN0001", "FForbidStatus": "A"},
+    {"FMATERIALID": 300103, "FNumber": "HM-GZ-2525", "FName": "纱布手帕 25×25", "F_NameJa": "ガーゼハンカチ 25×25", "FBARCODE": "4580000100035", "F_CartonQty": 200, "F_DefaultSupplier": "VEN0001", "FForbidStatus": "A"},
+    {"FMATERIALID": 300104, "FNumber": "HM-TW-OLD1", "FName": "旧款条纹毛巾", "F_NameJa": "ボーダータオル（旧）", "FBARCODE": "4580000100042", "F_CartonQty": 120, "F_DefaultSupplier": "VEN0001", "FForbidStatus": "B"},
+    {"FMATERIALID": 300201, "FNumber": "JB-BT-350", "FName": "不锈钢保温杯 350ml", "F_NameJa": "ステンレスマグボトル 350ml", "FBARCODE": "4580000200018", "F_CartonQty": 48, "F_DefaultSupplier": "VEN0002", "FForbidStatus": "A"},
+    {"FMATERIALID": 300202, "FNumber": "JB-BT-500", "FName": "不锈钢保温杯 500ml", "F_NameJa": "ステンレスマグボトル 500ml", "FBARCODE": "4580000200025", "F_CartonQty": 48, "F_DefaultSupplier": "VEN0002", "FForbidStatus": "A"},
+    {"FMATERIALID": 300203, "FNumber": "JB-LB-800", "FName": "双层午餐盒 800ml", "F_NameJa": "2段ランチボックス 800ml", "FBARCODE": "4580000200032", "F_CartonQty": 60, "F_DefaultSupplier": "VEN0002", "FForbidStatus": "A"},
+    {"FMATERIALID": 300301, "FNumber": "YX-SB-L", "FName": "折叠收纳盒 L", "F_NameJa": "折りたたみ収納ボックス L", "FBARCODE": "4580000300015", "F_CartonQty": 12, "F_DefaultSupplier": "VEN0003", "FForbidStatus": "A"},
+    {"FMATERIALID": 300302, "FNumber": "YX-SB-M", "FName": "折叠收纳盒 M", "F_NameJa": "折りたたみ収納ボックス M", "FBARCODE": "4580000300022", "F_CartonQty": 24, "F_DefaultSupplier": "VEN0003", "FForbidStatus": "A"},
+    {"FMATERIALID": 300303, "FNumber": "YX-HK-10", "FName": "无痕挂钩 10 个装", "F_NameJa": "粘着フック 10個入", "FBARCODE": "4580000300039", "F_CartonQty": 200, "F_DefaultSupplier": "VEN0003", "FForbidStatus": "A"}
+  ]
+}

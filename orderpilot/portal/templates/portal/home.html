@@ -1,0 +1,60 @@
+{% extends "portal/base.html" %}
+{% load po_tags %}
+{% block title %}我的采购单{% endblock %}
+{% block heading %}我的采购单{% endblock %}
+{% block content %}
+{% for s in sections %}
+<section class="portal-section">
+  <div class="section-head">
+    <h2>{{ s.label }}<span class="count">{{ s.pos|length }}</span></h2>
+    <p class="muted small">{{ s.hint }}</p>
+  </div>
+  {% if s.pos %}
+  <div class="card list">
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>采购单号</th><th class="num">数量</th><th>要求交期</th><th>承诺交期</th><th>剩余</th><th></th></tr></thead>
+        <tbody>
+        {% for po in s.pos %}
+          <tr>
+            <td><a class="mono" href="{% url 'portal:po_detail' po.pk %}">{{ po.number }}</a></td>
+            <td class="num">{{ po.total_qty|default:0 }}</td>
+            <td>{{ po.required_date|date:"Y-m-d" }}</td>
+            <td>{{ po.promised_date|date:"Y-m-d"|default:"—" }}</td>
+            <td>{% due_badge po %}</td>
+            <td><a class="btn btn-sm{% if s.status == 'pending_confirm' %} btn-primary{% endif %}" href="{% url 'portal:po_detail' po.pk %}">{% if s.status == 'pending_confirm' %}去确认{% else %}查看{% endif %}</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card empty">暂无</div>
+  {% endif %}
+</section>
+{% endfor %}
+
+{% if shipped %}
+<section class="portal-section">
+  <div class="section-head"><h2>最近已出货</h2></div>
+  <div class="card list">
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>采购单号</th><th class="num">数量</th><th>承诺交期</th><th>出货时间</th></tr></thead>
+        <tbody>
+        {% for po in shipped %}
+          <tr>
+            <td><a class="mono" href="{% url 'portal:po_detail' po.pk %}">{{ po.number }}</a></td>
+            <td class="num">{{ po.total_qty|default:0 }}</td>
+            <td>{{ po.promised_date|date:"Y-m-d"|default:"—" }}</td>
+            <td>{{ po.shipped_at|date:"Y-m-d" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

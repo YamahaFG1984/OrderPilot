@@ -1,0 +1,32 @@
+{% load po_tags %}
+<div class="card po-header">
+  <div>
+    <div class="po-header-title"><span class="mono big">{{ po.number }}</span>{% status_badge po %}{% due_badge po %}</div>
+    <div class="muted">
+      {{ po.supplier.name }}{% if ns == "workbench" and po.customer %} → {{ po.customer.name }}{% endif %}
+      · 要求交期 {{ po.required_date|date:"Y-m-d" }}{% if po.promised_date %} · 承诺交期 {{ po.promised_date|date:"Y-m-d" }}{% endif %}
+    </div>
+  </div>
+  <div class="actions">
+    {% if ns == "workbench" and po.status == "draft" %}<a class="btn" href="{% url 'workbench:po_edit' po.pk %}">编辑</a>{% endif %}
+    {% for action in actions %}
+      {% if action.form %}
+      <details class="action">
+        <summary class="btn btn-{{ action.t.style }}">{{ action.t.label }}</summary>
+        <form class="action-form" method="post" action="{{ action.url }}">
+          {% csrf_token %}
+          {{ action.form.as_div }}
+          <button class="btn btn-{{ action.t.style }}" type="submit">确认：{{ action.t.label }}</button>
+        </form>
+      </details>
+      {% else %}
+      <form class="inline" method="post" action="{{ action.url }}" onsubmit="return confirm('确定要「{{ action.t.label }}」吗？')">
+        {% csrf_token %}<button class="btn btn-{{ action.t.style }}" type="submit">{{ action.t.label }}</button>
+      </form>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% if po.status == "draft" and po.reject_reason %}
+<div class="flash flash-warning" style="margin-bottom:16px">供应商退回原因：{{ po.reject_reason }}</div>
+{% endif %}
