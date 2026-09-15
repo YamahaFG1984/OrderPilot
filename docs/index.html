@@ -123,6 +123,10 @@
   }
   pre code { background: none; padding: 0; font-size: inherit; }
 
+  figure.diagram { margin: 0 0 18px; }
+  .fig-scroll { overflow-x: auto; border-radius: 10px; }
+  .fig-scroll img { display: block; width: 100%; min-width: 640px; height: auto; }
+
   .table-wrap { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--border); border-radius: 8px; }
   table { border-collapse: collapse; width: 100%; font-size: 14px; background: var(--surface); }
   th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -276,9 +280,7 @@
 └── tests/</code></pre>
 
 <p><strong>依赖方向（必须遵守）：</strong></p>
-<pre><code>extensions/&lt;customer&gt;  →  orderpilot.trade  →  orderpilot.platform
-         └──────────────────────────────────────────↗
-workbench / portal     →  trade + platform</code></pre>
+<figure class="diagram"><div class="fig-scroll"><img src="img/deps.svg" alt="代码依赖方向" width="830" height="320" loading="lazy"></div></figure>
 <ul>
   <li><code>platform</code> 不依赖 <code>trade</code>；</li>
   <li>核心任何代码都不依赖 <code>extensions</code>；</li>
@@ -394,12 +396,7 @@ def push_to_erp(po, **kw):
 </ul>
 
 <h3>5.3 通知</h3>
-<pre><code>业务事件 / 预警 ──▶ Notification（收件人、类型、标题、正文、关联对象）
-                         │
-                         ▼
-               按订阅偏好分发（Celery notify 队列）
-       ┌──────────┬───────────┬──────────────┬──────────┐
-     站内信      邮件      企业微信 webhook   钉钉/飞书 webhook</code></pre>
+<figure class="diagram"><div class="fig-scroll"><img src="img/notify.svg" alt="通知分发流程" width="820" height="400" loading="lazy"></div></figure>
 <ul>
   <li>渠道是可插拔的 <code>Channel</code> 类，客户可以在扩展里新增渠道；</li>
   <li>用户可以设置"哪类通知走哪个渠道"，并支持每日汇总，避免消息轰炸；</li>
@@ -440,15 +437,9 @@ def push_to_erp(po, **kw):
 <p>所有主数据都通过 <code>ExternalRef(content_type, object_id, system, external_id)</code> 关联 ERP 里的 ID，<strong>不在业务模型上直接加 <code>kingdee_id</code> 这种字段</strong>。</p>
 
 <h3>6.2 单据流转</h3>
-<pre><code>客户订单 SalesOrder ──拆分/合并──▶ 采购单 PurchaseOrder ──▶ 出货 Shipment ──▶ 结算
-   │                                  │                        │                  │
-   ├ 首单/翻单                         ├ 承诺交期/确认交期        ├ 出货确认          ├ SupplierInvoice
-   └ 客户交期                          ├ 生产节点 Milestone      ├ 报关资料          ├ Payment
-                                      └ 交期变更历史             └ 物流单号          └ Penalty</code></pre>
+<figure class="diagram"><div class="fig-scroll"><img src="img/doc-flow.svg" alt="单据流转" width="890" height="250" loading="lazy"></div></figure>
 <p><strong>采购单标准状态机（核心定义，扩展只能加钩子）：</strong></p>
-<pre><code>草稿 ─提交─▶ 待供应商确认 ─确认─▶ 生产中 ─▶ 待验货 ─▶ 待出货 ─▶ 已出货 ─▶ 已结算
-               │                       │
-               └─拒绝/改期─▶ 草稿       └─(任意阶段) 取消</code></pre>
+<figure class="diagram"><div class="fig-scroll"><img src="img/po-states.svg" alt="采购单标准状态机" width="880" height="245" loading="lazy"></div></figure>
 <ul>
   <li>状态转换统一通过 <code>workflow</code> 模块执行，自动写审计记录、发布领域事件；</li>
   <li>状态机实现可以选用 <code>viewflow.fsm</code> 或者一个轻量的自研实现（转换表加钩子）。<strong>不做可视化或可配置的流程引擎</strong>，等有第二家客户验证需求后再考虑。</li>
@@ -471,10 +462,7 @@ def push_to_erp(po, **kw):
 <p>同步发生冲突时，以该实体的权威来源为准，被覆盖的一方写入同步日志。</p>
 
 <h3>6.4 补货</h3>
-<pre><code>SalesSnapshot(门店×商品×周期的销量)  ┐
-InventorySnapshot(仓库×商品×日期)    ├─▶ ReplenishmentStrategy ─▶ ReplenishmentSuggestion ─人工确认─▶ PurchaseOrder
-在途量(未到货的采购单)                │      （注册表，可按客户替换）      （建议量、依据、预计断货日）
-SupplierProduct.生产周期/最小起订量   ┘</code></pre>
+<figure class="diagram"><div class="fig-scroll"><img src="img/replenishment.svg" alt="补货建议计算流程" width="880" height="275" loading="lazy"></div></figure>
 <ul>
   <li>默认策略：<code>建议量 = 预测日均销量 × (生产周期 + 海运周期 + 安全天数) − 可用库存 − 在途量</code>，再按最小起订量和箱规取整；</li>
   <li>每条建议都保存计算依据（输入快照加中间值），方便解释和复盘；</li>
@@ -556,7 +544,7 @@ SupplierProduct.生产周期/最小起订量   ┘</code></pre>
 <h2><span class="num">8</span>导入引擎和 AI 辅助</h2>
 
 <h3>8.1 导入流程</h3>
-<pre><code>上传文件 ─▶ 选择/识别 ImportTemplate ─▶ 解析 ─▶ 逐行校验 ─▶ 预览（错误和差异高亮） ─▶ 确认入库 ─▶ ImportBatch 留档</code></pre>
+<figure class="diagram"><div class="fig-scroll"><img src="img/import.svg" alt="导入流程" width="900" height="195" loading="lazy"></div></figure>
 <ul>
   <li><code>ImportTemplate</code>：目标实体、表头行、列映射、值转换（日期格式、单位、代码映射）、唯一键；</li>
   <li><code>ImportBatch</code>：原文件（作为附件保存）、状态、每行结果；可以按批次回滚；</li>
@@ -614,13 +602,7 @@ SupplierProduct.生产周期/最小起订量   ┘</code></pre>
 
 <h3>10.1 部署</h3>
 <p>每家客户一套 docker-compose：</p>
-<pre><code>nginx ─▶ web (gunicorn)
-          │
-          ├── postgres
-          ├── redis
-          ├── celery-worker (default, notify)
-          ├── celery-worker (sync)
-          └── celery-beat</code></pre>
+<figure class="diagram"><div class="fig-scroll"><img src="img/deploy.svg" alt="单个客户实例的部署结构" width="880" height="375" loading="lazy"></div></figure>
 <ul>
   <li>配置全部走环境变量（<code>django-environ</code>），镜像不区分客户，只是注入的 <code>ORDERPILOT_EXTENSION</code> 和配置不同；</li>
   <li>每天自动备份 PostgreSQL 和附件存储，并定期做恢复演练；</li>

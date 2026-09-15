@@ -85,11 +85,7 @@ OrderPilot/
 
 **依赖方向（必须遵守）：**
 
-```
-extensions/<customer>  →  orderpilot.trade  →  orderpilot.platform
-         └──────────────────────────────────────────↗
-workbench / portal     →  trade + platform
-```
+![代码依赖方向](img/deps.svg)
 
 - `platform` 不依赖 `trade`；
 - 核心任何代码都不依赖 `extensions`；
@@ -209,14 +205,7 @@ def push_to_erp(po, **kw):
 
 ### 5.3 通知
 
-```
-业务事件 / 预警 ──▶ Notification（收件人、类型、标题、正文、关联对象）
-                         │
-                         ▼
-               按订阅偏好分发（Celery notify 队列）
-       ┌──────────┬───────────┬──────────────┬──────────┐
-     站内信      邮件      企业微信 webhook   钉钉/飞书 webhook
-```
+![通知分发流程](img/notify.svg)
 
 - 渠道是可插拔的 `Channel` 类，客户可以在扩展里新增渠道；
 - 用户可以设置"哪类通知走哪个渠道"，并支持每日汇总，避免消息轰炸；
@@ -253,21 +242,11 @@ def push_to_erp(po, **kw):
 
 ### 6.2 单据流转
 
-```
-客户订单 SalesOrder ──拆分/合并──▶ 采购单 PurchaseOrder ──▶ 出货 Shipment ──▶ 结算
-   │                                  │                        │                  │
-   ├ 首单/翻单                         ├ 承诺交期/确认交期        ├ 出货确认          ├ SupplierInvoice
-   └ 客户交期                          ├ 生产节点 Milestone      ├ 报关资料          ├ Payment
-                                      └ 交期变更历史             └ 物流单号          └ Penalty
-```
+![单据流转](img/doc-flow.svg)
 
 **采购单标准状态机（核心定义，扩展只能加钩子）：**
 
-```
-草稿 ─提交─▶ 待供应商确认 ─确认─▶ 生产中 ─▶ 待验货 ─▶ 待出货 ─▶ 已出货 ─▶ 已结算
-               │                       │
-               └─拒绝/改期─▶ 草稿       └─(任意阶段) 取消
-```
+![采购单标准状态机](img/po-states.svg)
 
 - 状态转换统一通过 `workflow` 模块执行，自动写审计记录、发布领域事件；
 - 状态机实现可以选用 `viewflow.fsm` 或者一个轻量的自研实现（转换表加钩子）。**不做可视化或可配置的流程引擎**，等有第二家客户验证需求后再考虑。
@@ -289,12 +268,7 @@ def push_to_erp(po, **kw):
 
 ### 6.4 补货
 
-```
-SalesSnapshot(门店×商品×周期的销量)  ┐
-InventorySnapshot(仓库×商品×日期)    ├─▶ ReplenishmentStrategy ─▶ ReplenishmentSuggestion ─人工确认─▶ PurchaseOrder
-在途量(未到货的采购单)                │      （注册表，可按客户替换）      （建议量、依据、预计断货日）
-SupplierProduct.生产周期/最小起订量   ┘
-```
+![补货建议计算流程](img/replenishment.svg)
 
 - 默认策略：`建议量 = 预测日均销量 × (生产周期 + 海运周期 + 安全天数) − 可用库存 − 在途量`，再按最小起订量和箱规取整；
 - 每条建议都保存计算依据（输入快照加中间值），方便解释和复盘；
@@ -368,9 +342,7 @@ class ERPAdapter(ABC):
 
 ### 8.1 导入流程
 
-```
-上传文件 ─▶ 选择/识别 ImportTemplate ─▶ 解析 ─▶ 逐行校验 ─▶ 预览（错误和差异高亮） ─▶ 确认入库 ─▶ ImportBatch 留档
-```
+![导入流程](img/import.svg)
 
 - `ImportTemplate`：目标实体、表头行、列映射、值转换（日期格式、单位、代码映射）、唯一键；
 - `ImportBatch`：原文件（作为附件保存）、状态、每行结果；可以按批次回滚；
@@ -416,15 +388,7 @@ class ERPAdapter(ABC):
 
 每家客户一套 docker-compose：
 
-```
-nginx ─▶ web (gunicorn)
-          │
-          ├── postgres
-          ├── redis
-          ├── celery-worker (default, notify)
-          ├── celery-worker (sync)
-          └── celery-beat
-```
+![单个客户实例的部署结构](img/deploy.svg)
 
 - 配置全部走环境变量（`django-environ`），镜像不区分客户，只是注入的 `ORDERPILOT_EXTENSION` 和配置不同；
 - 每天自动备份 PostgreSQL 和附件存储，并定期做恢复演练；

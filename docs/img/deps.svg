@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 830 320" width="830" height="320" role="img" aria-labelledby="t">
+<title id="t">代码依赖方向</title>
+<defs>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#1f2328}
+.t{font-size:14px;font-weight:600}
+.s{font-size:12px;fill:#5b636e}
+.mt{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;font-weight:600}
+.c{text-anchor:middle}
+.bg{fill:#fff;stroke:#e3e5e8}
+.box{fill:#f5f7fa;stroke:#c5ccd6;stroke-width:1.2}
+.pri{fill:#eaf1fd;stroke:#1d5fd1;stroke-width:1.4}
+.ext{fill:#fff4e5;stroke:#d9822b;stroke-width:1.4}
+.ln{fill:none;stroke:#6b7480;stroke-width:1.5}
+.grp{fill:none;stroke:#9aa3ae;stroke-width:1.2;stroke-dasharray:6 5}
+.ah{fill:#6b7480}
+@media (prefers-color-scheme:dark){
+text{fill:#e6e8eb}.s{fill:#9aa3ae}
+.bg{fill:#161a20;stroke:#2a3039}.box{fill:#1d232b;stroke:#3a4350}
+.pri{fill:#1a2638;stroke:#6ea2ff}.ext{fill:#2d2113;stroke:#e0a060}
+.ln{stroke:#8a94a0}.grp{stroke:#5b636e}.ah{fill:#8a94a0}
+}
+</style>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0.5" y="0.5" width="829" height="319" rx="10"/>
+
+<rect class="grp" x="292" y="46" width="522" height="218" rx="10"/>
+<text class="s" x="802" y="256" text-anchor="end">核心 orderpilot/</text>
+
+<path class="ln" d="M120,60 V30 H700 V56" marker-end="url(#a)"/>
+<text class="s c" x="410" y="22">扩展也可以直接使用平台能力</text>
+<path class="ln" d="M220,88 H306" marker-end="url(#a)"/>
+<path class="ln" d="M510,88 H596" marker-end="url(#a)"/>
+<path class="ln" d="M410,190 V120" marker-end="url(#a)"/>
+<path class="ln" d="M510,218 H700 V120" marker-end="url(#a)"/>
+
+<rect class="ext" x="20" y="60" width="200" height="56" rx="8"/>
+<text class="mt c" x="120" y="84">extensions/&lt;customer&gt;</text>
+<text class="s c" x="120" y="104">客户定制扩展</text>
+
+<rect class="pri" x="310" y="60" width="200" height="56" rx="8"/>
+<text class="mt c" x="410" y="84">orderpilot.trade</text>
+<text class="s c" x="410" y="104">跟单领域</text>
+
+<rect class="pri" x="600" y="60" width="200" height="56" rx="8"/>
+<text class="mt c" x="700" y="84">orderpilot.platform</text>
+<text class="s c" x="700" y="104">平台基础（与业务无关）</text>
+
+<rect class="box" x="310" y="190" width="200" height="56" rx="8"/>
+<text class="mt c" x="410" y="214">workbench / portal</text>
+<text class="s c" x="410" y="234">内部工作台 · 供应商门户</text>
+
+<text class="s" x="20" y="290">箭头表示依赖方向：A → B 表示 A 可以引用 B。</text>
+<text class="s" x="20" y="308">核心（trade、platform、workbench/portal）不得依赖 extensions；platform 不得依赖 trade。</text>
+</svg>

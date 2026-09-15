@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 195" width="900" height="195" role="img" aria-labelledby="t">
+<title id="t">导入流程</title>
+<defs>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#1f2328}
+.t{font-size:14px;font-weight:600}
+.s{font-size:12px;fill:#5b636e}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.c{text-anchor:middle}
+.bg{fill:#fff;stroke:#e3e5e8}
+.box{fill:#f5f7fa;stroke:#c5ccd6;stroke-width:1.2}
+.hum{fill:#f1ecfd;stroke:#7a52cc;stroke-width:1.4}
+.ai{fill:none;stroke:#7a52cc;stroke-width:1.2;stroke-dasharray:5 4}
+.ln{fill:none;stroke:#6b7480;stroke-width:1.5}
+.dash{stroke-dasharray:4 3}
+.ah{fill:#6b7480}
+@media (prefers-color-scheme:dark){
+text{fill:#e6e8eb}.s{fill:#9aa3ae}
+.bg{fill:#161a20;stroke:#2a3039}.box{fill:#1d232b;stroke:#3a4350}
+.hum{fill:#231c35;stroke:#a888f0}.ai{stroke:#a888f0}
+.ln{stroke:#8a94a0}.ah{fill:#8a94a0}
+}
+</style>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<rect class="bg" x="0.5" y="0.5" width="899" height="194" rx="10"/>
+
+<!-- AI 辅助 -->
+<rect class="ai" x="140" y="12" width="280" height="36" rx="8"/>
+<text class="s c" x="280" y="35">AI 辅助（可选）：列映射建议 · 邮件/PDF 解析</text>
+<path class="ln dash" d="M194,48 V66" marker-end="url(#a)"/>
+<path class="ln dash" d="M322,48 V66" marker-end="url(#a)"/>
+
+<!-- 步骤 -->
+<rect class="box" x="12" y="70" width="108" height="60" rx="8"/>
+<text class="t c" x="66" y="96">上传文件</text>
+<text class="s c" x="66" y="116">Excel · PDF</text>
+
+<rect class="box" x="140" y="70" width="108" height="60" rx="8"/>
+<text class="t c" x="194" y="96">选择模板</text>
+<text class="s mono c" x="194" y="116">ImportTemplate</text>
+
+<rect class="box" x="268" y="70" width="108" height="60" rx="8"/>
+<text class="t c" x="322" y="96">解析</text>
+<text class="s c" x="322" y="116">注册表解析器</text>
+
+<rect class="box" x="396" y="70" width="108" height="60" rx="8"/>
+<text class="t c" x="450" y="96">逐行校验</text>
+<text class="s c" x="450" y="116">必填 · 唯一键</text>
+
+<rect class="hum" x="524" y="70" width="108" height="60" rx="8"/>
+<text class="t c" x="578" y="96">预览</text>
+<text class="s c" x="578" y="116">错误和差异高亮</text>
+
+<rect class="hum" x="652" y="70" width="108" height="60" rx="8"/>
+<text class="t c" x="706" y="96">确认入库</text>
+<text class="s c" x="706" y="116">人工确认</text>
+
+<rect class="box" x="780" y="70" width="108" height="60" rx="8"/>
+<text class="t c" x="834" y="96">留档</text>
+<text class="s mono c" x="834" y="116">ImportBatch</text>
+
+<path class="ln" d="M120,100 H136" marker-end="url(#a)"/>
+<path class="ln" d="M248,100 H264" marker-end="url(#a)"/>
+<path class="ln" d="M376,100 H392" marker-end="url(#a)"/>
+<path class="ln" d="M504,100 H520" marker-end="url(#a)"/>
+<path class="ln" d="M632,100 H648" marker-end="url(#a)"/>
+<path class="ln" d="M760,100 H776" marker-end="url(#a)"/>
+
+<!-- 图例 -->
+<rect class="box" x="12" y="160" width="14" height="14" rx="3"/>
+<text class="s" x="32" y="172">系统步骤</text>
+<rect class="hum" x="112" y="160" width="14" height="14" rx="3"/>
+<text class="s" x="132" y="172">人工确认环节</text>
+<rect class="ai" x="236" y="160" width="14" height="14" rx="3"/>
+<text class="s" x="256" y="172">AI 可选辅助，输出只是草稿</text>
+<text class="s" x="888" y="172" text-anchor="end">ImportBatch 保留原文件和逐行结果，可按批次回滚</text>
+</svg>
